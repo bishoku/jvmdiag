@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -42,56 +43,74 @@ type CapturedBundle struct {
 }
 
 func ListProcesses(ctx context.Context) ([]JVMProcess, error) {
-	// Container JVMs may be absent from the local hsperfdata listing.
-	if procs, err := listProcJVMs("/proc"); err == nil {
-		return procs, nil
+	return listProcesses(ctx, "/proc", findJDKTool, runCommand)
+}
+
+func listProcesses(ctx context.Context, procRoot string, findTool func(string) string, run commandRunner) ([]JVMProcess, error) {
+	// Procfs sees container JVMs without shared perfdata; JDK discovery also sees
+	// native launchers and provides their main class. Neither source is complete.
+	procs, procErr := listProcJVMs(procRoot)
+	byPID := make(map[int]JVMProcess)
+	merge := func(found []JVMProcess) {
+		for _, proc := range found {
+			if previous, ok := byPID[proc.PID]; ok {
+				if proc.MainClass == "" || proc.MainClass == "(jvm process)" {
+					proc.MainClass = previous.MainClass
+				}
+				if proc.Args == "" {
+					proc.Args = previous.Args
+				}
+			}
+			byPID[proc.PID] = proc
+		}
 	}
+	merge(procs)
 	cctx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
-
-	if jcmd := findJDKTool("jcmd"); jcmd != "" {
-		if out, err := exec.CommandContext(cctx, jcmd, "-l").Output(); err == nil {
-			procs := parseJcmdList(string(out))
-			if len(procs) > 0 {
-				return procs, nil
+	listed := procErr == nil
+	for _, source := range []struct{ tool, flag string }{{"jcmd", "-l"}, {"jps", "-lv"}} {
+		if tool := findTool(source.tool); tool != "" {
+			if out, err := run(cctx, tool, source.flag); err == nil {
+				listed = true
+				found := parseJcmdList(string(out))
+				merge(found)
+				if len(found) > 0 {
+					break
+				}
 			}
 		}
 	}
 
-	if jps := findJDKTool("jps"); jps != "" {
-		if out, err := exec.CommandContext(cctx, jps, "-lv").Output(); err == nil {
-			procs := parseJcmdList(string(out))
-			if len(procs) > 0 {
-				return procs, nil
+	// Non-procfs platforms can still discover ordinary Java processes without JDK tools.
+	if procErr != nil && len(byPID) == 0 {
+		if out, err := run(cctx, "ps", "-eo", "pid,args"); err == nil {
+			listed = true
+			for _, line := range strings.Split(string(out), "\n") {
+				fields := strings.Fields(line)
+				if len(fields) < 2 {
+					continue
+				}
+				pid, err := strconv.Atoi(fields[0])
+				if err != nil || pid <= 0 {
+					continue
+				}
+				cmdBase := filepath.Base(fields[1])
+				if cmdBase == "java" || cmdBase == "java.exe" {
+					rest := strings.Join(fields[2:], " ")
+					merge([]JVMProcess{{PID: pid, MainClass: rest, Args: rest}})
+				}
 			}
 		}
 	}
-
-	// Fallback to ps
-	if out, err := exec.CommandContext(cctx, "ps", "-eo", "pid,args").Output(); err == nil {
-		var procs []JVMProcess
-		for _, line := range strings.Split(string(out), "\n") {
-			fields := strings.Fields(line)
-			if len(fields) < 2 {
-				continue
-			}
-			pid, err := strconv.Atoi(fields[0])
-			if err != nil {
-				continue
-			}
-			cmdBase := filepath.Base(fields[1])
-			if cmdBase == "java" || cmdBase == "java.exe" {
-				rest := strings.Join(fields[2:], " ")
-				procs = append(procs, JVMProcess{
-					PID:       pid,
-					MainClass: rest,
-				})
-			}
-		}
-		return procs, nil
+	if !listed && len(byPID) == 0 {
+		return nil, fmt.Errorf("neither procfs, jcmd, jps, nor ps could list running JVM processes")
 	}
-
-	return nil, fmt.Errorf("neither jcmd, jps, nor ps could list running JVM processes")
+	result := make([]JVMProcess, 0, len(byPID))
+	for _, proc := range byPID {
+		result = append(result, proc)
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].PID < result[j].PID })
+	return result, nil
 }
 
 func parseJcmdList(output string) []JVMProcess {
@@ -106,7 +125,7 @@ func parseJcmdList(output string) []JVMProcess {
 			continue
 		}
 		pid, err := strconv.Atoi(fields[0])
-		if err != nil {
+		if err != nil || pid <= 0 {
 			continue
 		}
 		mainCls := "(jvm process)"
