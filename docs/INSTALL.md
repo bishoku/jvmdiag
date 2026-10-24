@@ -90,7 +90,7 @@ After a tagged release exists, Go users can alternatively install from source wi
 go install github.com/bishoku/jvmdiag/cmd/jvmdiag@v0.0.1
 ```
 
-This compiles locally and reports the module version. Its executable bytes differ from the GitHub archive and do not carry that archive's provenance attestation. Add `$(go env GOPATH)/bin` to PATH if needed. Go's `/v3` module suffix matches the v3 release tags.
+This compiles locally and reports the module version. Its executable bytes differ from the GitHub archive and do not carry that archive's provenance attestation. Add `$(go env GOPATH)/bin` to PATH if needed. Go v0 and v1 module paths have no major-version suffix.
 
 A direct `go build` reports `dev`/unknown revision metadata. The release workflow injects the validated version, commit and commit timestamp. For a locally versioned package, run `scripts/release.py build` as described in [RELEASING.md](RELEASING.md). The public module path is `github.com/bishoku/jvmdiag`; previous experimental monorepo imports have been migrated. There is no Homebrew, apt, Chocolatey or Winget publication in this workflow.
 
