@@ -19,7 +19,7 @@ Release archives cover Linux AMD64/ARM64, macOS Intel/Apple Silicon and Windows 
 Choose the OS/architecture in the release asset name. `x86_64` means `amd64`; `aarch64`/Apple Silicon mean `arm64`. Replace the example version with an existing release.
 
 ```sh
-VERSION=3.0.0
+VERSION=0.0.1
 # Linux ARM64: PLATFORM=linux_arm64; Intel Mac: darwin_amd64; Apple Silicon: darwin_arm64
 PLATFORM=linux_amd64
 ASSET="jvmdiag_${VERSION}_${PLATFORM}.tar.gz"
@@ -55,7 +55,7 @@ Checksums detect corruption; downloading a checksum beside an asset is not an in
 Download `jvmdiag_VERSION_windows_amd64.zip` and `SHA256SUMS` from the same release. In PowerShell:
 
 ```powershell
-$Version = '3.0.0'
+$Version = '0.0.1'
 $Asset = "jvmdiag_${Version}_windows_amd64.zip"
 $Base = "https://github.com/bishoku/jvmdiag/releases/download/v$Version"
 Invoke-WebRequest "$Base/$Asset" -OutFile $Asset
@@ -87,12 +87,12 @@ go build -trimpath -o jvmdiag ./cmd/jvmdiag
 After a tagged release exists, Go users can alternatively install from source with:
 
 ```sh
-go install github.com/bishoku/jvmdiag/v3/cmd/jvmdiag@v3.0.0
+go install github.com/bishoku/jvmdiag/cmd/jvmdiag@v0.0.1
 ```
 
 This compiles locally and reports the module version. Its executable bytes differ from the GitHub archive and do not carry that archive's provenance attestation. Add `$(go env GOPATH)/bin` to PATH if needed. Go's `/v3` module suffix matches the v3 release tags.
 
-A direct `go build` reports `dev`/unknown revision metadata. The release workflow injects the validated version, commit and commit timestamp. For a locally versioned package, run `scripts/release.py build` as described in [RELEASING.md](RELEASING.md). The public module path is `github.com/bishoku/jvmdiag/v3`; previous experimental monorepo imports have been migrated. There is no Homebrew, apt, Chocolatey or Winget publication in this workflow.
+A direct `go build` reports `dev`/unknown revision metadata. The release workflow injects the validated version, commit and commit timestamp. For a locally versioned package, run `scripts/release.py build` as described in [RELEASING.md](RELEASING.md). The public module path is `github.com/bishoku/jvmdiag`; previous experimental monorepo imports have been migrated. There is no Homebrew, apt, Chocolatey or Winget publication in this workflow.
 
 ## Container server
 
@@ -109,15 +109,15 @@ Replace the placeholders; on Unix set `chmod 600 server.env`. Do not commit it o
 docker volume create jvmdiag-data
 docker run --rm --name jvmdiag -p 127.0.0.1:8080:8080 \
   --env-file server.env --mount source=jvmdiag-data,target=/data \
-  ghcr.io/bishoku/jvmdiag:3.0.0
+  ghcr.io/bishoku/jvmdiag:0.0.1
 ```
 
 Open `http://localhost:8080` and connect using your workspace name/token. Keep the host port bound to loopback for this example. For remote deployment, configure TLS at the reverse proxy and `JVMDIAG_PUBLIC_ORIGIN`; see the README security section. The server image has no JDK or MAT runtime. Add a compatible runtime yourself or use a diagnostic image for CLI/JVM work. Builds do not publish ports or credentials automatically.
 
-Versioned diagnostic images are `ghcr.io/bishoku/jvmdiag:3.0.0-diagnostic-jdk17` and `:3.0.0-diagnostic-jdk25`. Stable aliases are `latest`, `diagnostic-jdk17` and `diagnostic-jdk25`; prereleases never update them. Prefer versioned tags or, for immutable deployments, verified image digests. For example:
+Versioned diagnostic images are `ghcr.io/bishoku/jvmdiag:0.0.1-diagnostic-jdk17` and `:0.0.1-diagnostic-jdk25`. Stable aliases are `latest`, `diagnostic-jdk17` and `diagnostic-jdk25`; prereleases never update them. Prefer versioned tags or, for immutable deployments, verified image digests. For example:
 
 ```sh
-gh attestation verify oci://ghcr.io/bishoku/jvmdiag:3.0.0 --repo bishoku/jvmdiag \
+gh attestation verify oci://ghcr.io/bishoku/jvmdiag:0.0.1 --repo bishoku/jvmdiag \
   --signer-workflow bishoku/jvmdiag/.github/workflows/release.yml
 # Use the verified digest from the attestation/registry for deployment:
 # docker pull ghcr.io/bishoku/jvmdiag@sha256:VERIFIED_DIGEST

@@ -13,7 +13,7 @@ import (
 	"time"
 	"unicode/utf16"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/quality"
+	"github.com/bishoku/jvmdiag/internal/analyzer/quality"
 )
 
 // HPROF Top-Level Tags

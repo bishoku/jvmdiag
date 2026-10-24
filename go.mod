@@ -1,3 +1,3 @@
-module github.com/bishoku/jvmdiag/v3
+module github.com/bishoku/jvmdiag
 
 go 1.22

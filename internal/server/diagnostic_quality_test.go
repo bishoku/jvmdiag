@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/bishoku/jvmdiag/v3/internal/testutil"
+	"github.com/bishoku/jvmdiag/internal/testutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/quality"
-	"github.com/bishoku/jvmdiag/v3/internal/config"
+	"github.com/bishoku/jvmdiag/internal/analyzer/quality"
+	"github.com/bishoku/jvmdiag/internal/config"
 )
 
 func TestInvalidDiagnosticsFailAndLimitedResultsStayExplicit(t *testing.T) {

@@ -16,14 +16,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/gclog"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/hprof"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/jfr"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/mat"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/nmtcrash"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/threaddump"
-	"github.com/bishoku/jvmdiag/v3/internal/capture"
-	"github.com/bishoku/jvmdiag/v3/internal/store"
+	"github.com/bishoku/jvmdiag/internal/analyzer/gclog"
+	"github.com/bishoku/jvmdiag/internal/analyzer/hprof"
+	"github.com/bishoku/jvmdiag/internal/analyzer/jfr"
+	"github.com/bishoku/jvmdiag/internal/analyzer/mat"
+	"github.com/bishoku/jvmdiag/internal/analyzer/nmtcrash"
+	"github.com/bishoku/jvmdiag/internal/analyzer/threaddump"
+	"github.com/bishoku/jvmdiag/internal/capture"
+	"github.com/bishoku/jvmdiag/internal/store"
 )
 
 const (
@@ -500,7 +500,7 @@ func (s *Server) handleSingleRPC(ctx context.Context, workspaceID, sessionID, st
 			},
 			"serverInfo": map[string]any{
 				"name":    "jvmdiag-mcp-server",
-				"version": "3.0.0",
+				"version": "0.0.1",
 			},
 		}
 	case "ping":

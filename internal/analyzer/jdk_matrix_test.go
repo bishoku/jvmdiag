@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/jfr"
+	"github.com/bishoku/jvmdiag/internal/analyzer/jfr"
 )
 
 func jdkMatrix(t *testing.T) map[string]string {

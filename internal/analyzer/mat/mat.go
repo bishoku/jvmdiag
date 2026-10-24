@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/hprof"
+	"github.com/bishoku/jvmdiag/internal/analyzer/hprof"
 )
 
 const (
