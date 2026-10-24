@@ -31,6 +31,9 @@ class ReleaseSafetyTests(unittest.TestCase):
                     self.assertRegex(action,r'^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[0-9a-f]{40}$')
         source=(root/'.github/workflows/release.yml').read_text()
         self.assertIn('needs: [metadata, verify, images]',source)
+        publish=source.split('  publish:',1)[1]
+        self.assertIn('group: release-publication',publish)
+        self.assertIn('cancel-in-progress: false',publish)
         for name in ('Dockerfile','Dockerfile.diagnostic'):
             self.assertIn('golang:'+ (root/'.go-version').read_text().strip()+'-bookworm',(root/name).read_text())
 
