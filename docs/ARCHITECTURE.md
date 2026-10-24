@@ -16,3 +16,9 @@
    - **MCP Server (Streamable HTTP + Local Stdio):** Connect clients to `/mcp` using Streamable HTTP (JSON responses; no SSE), or locally via stdio (`jvmdiag mcp --file dump.hprof`). Shared HTTP clients must send a Bearer token.
 
 See [diagnostic semantics](DIAGNOSTIC-SEMANTICS.md) for metric definitions and unsupported capabilities, and [security and configuration](SECURITY-AND-CONFIGURATION.md) for workspace authorization and settings.
+
+## Live JVM discovery
+
+`jvmdiag ps` merges procfs results with `jcmd -l` (or `jps -lv` when needed), deduplicates by PID and prefers JDK main-class metadata. Linux discovery recognizes both `java` executables and native launchers with a mapped `libjvm.so`, such as IntelliJ IDEA's `idea` launcher. Embedded JVMs remain discoverable without JDK tools when their procfs mappings are readable; the display then identifies the native launcher rather than claiming to know its Java main class.
+
+Procfs discovery preserves visibility into container JVMs without shared perfdata. Unreadable process mappings, disabled perfdata, PID namespaces and other operating-system restrictions can still limit discovery. Listing a JVM does not establish attach permissions or a healthy runtime.

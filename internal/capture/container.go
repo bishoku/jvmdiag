@@ -1,6 +1,7 @@
 package capture
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,17 +31,45 @@ func listProcJVMs(root string) ([]JVMProcess, error) {
 		if !isJava && len(fields) > 0 {
 			isJava = filepath.Base(fields[0]) == "java"
 		}
-		if !isJava {
+		if !isJava && !hasMappedJVM(filepath.Join(base, "maps")) {
 			continue
+		}
+		main := javaMain(fields[1:])
+		if !isJava {
+			// A native launcher has no Java command-line main class. JDK discovery
+			// can supply one later; retain a useful hint when no JDK is installed.
+			main = "(embedded JVM: " + filepath.Base(fields[0]) + ")"
 		}
 		args := ""
 		if len(fields) > 1 {
 			args = strings.Join(fields[1:], " ")
 		}
-		result = append(result, JVMProcess{PID: pid, MainClass: javaMain(fields[1:]), Args: args})
+		result = append(result, JVMProcess{PID: pid, MainClass: main, Args: args})
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].PID < result[j].PID })
 	return result, nil
+}
+
+// Native launchers such as IntelliJ's `idea` embed HotSpot instead of execing
+// `java`. Check mapped library paths, not command-line mentions of libjvm.
+func hasMappedJVM(path string) bool {
+	file, err := os.Open(path)
+	if err != nil {
+		return false // Other users' processes and exiting processes may be unreadable.
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+		if len(fields) < 6 {
+			continue
+		}
+		library := strings.TrimSuffix(strings.Join(fields[5:], " "), " (deleted)")
+		if filepath.Base(library) == "libjvm.so" {
+			return true
+		}
+	}
+	return false
 }
 
 func targetRoot(pid int) (string, error) {

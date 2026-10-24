@@ -4,6 +4,13 @@ Changes follow [Semantic Versioning](https://semver.org/). Dates are recorded wh
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-10-24
+
+- Discover embedded HotSpot JVMs launched by native executables such as IntelliJ IDEA, including Linux systems without JDK discovery tools.
+- Merge procfs and JDK process listings by PID, retaining container JVMs and preferring JDK main-class metadata; try JDK tools even when procfs returns an empty list.
+- Add regressions for native launchers, duplicate PIDs, unavailable JDK tools and discovery without procfs.
+- Correct the installation guide's Docker loopback binding example.
+
 ## [0.0.2] - 2026-10-24
 
 - Fail incident and MCP capture analysis when a requested thread snapshot cannot be read or analyzed.
