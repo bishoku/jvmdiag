@@ -125,6 +125,9 @@ jobs:
           retention-days: 7
   publish:
     needs: [metadata, verify, images]
+    concurrency:
+      group: release-publication
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
