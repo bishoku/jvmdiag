@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/hprof"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/mat"
-	"github.com/bishoku/jvmdiag/v3/internal/config"
-	"github.com/bishoku/jvmdiag/v3/internal/model"
+	"github.com/bishoku/jvmdiag/internal/analyzer/hprof"
+	"github.com/bishoku/jvmdiag/internal/analyzer/mat"
+	"github.com/bishoku/jvmdiag/internal/config"
+	"github.com/bishoku/jvmdiag/internal/model"
 )
 
 type HeapSession struct {

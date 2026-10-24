@@ -1,6 +1,6 @@
 # Maintainer and release guide
 
-The repository is `bishoku/jvmdiag`, licensed Apache-2.0. Version metadata lives in `VERSION`; direct source builds default to `dev`. The Go module is `github.com/bishoku/jvmdiag/v3`.
+The repository is `bishoku/jvmdiag`, licensed Apache-2.0. Version metadata lives in `VERSION`; direct source builds default to `dev`. The Go module is `github.com/bishoku/jvmdiag`.
 
 ## One-time GitHub configuration
 
@@ -35,9 +35,9 @@ The final `Required checks` job fails if any prerequisite fails, is cancelled or
 3. Validate, then push an annotated tag:
 
 ```sh
-python3 scripts/release.py validate v3.0.0
-git tag -a v3.0.0 -m 'Release v3.0.0'
-git push origin v3.0.0
+python3 scripts/release.py validate v0.0.1
+git tag -a v0.0.1 -m 'Release v0.0.1'
+git push origin v0.0.1
 ```
 
 The example version is not an instruction to overwrite an existing tag. SemVer tags must be `vMAJOR.MINOR.PATCH`, optionally followed by a valid prerelease such as `-rc.1`. Numeric identifiers cannot have leading zeros. Build metadata (`+...`) and other tag formats are rejected. The tag must exactly match `VERSION`; the workflow also checks that HEAD belongs to the default branch's history.
@@ -66,10 +66,10 @@ If publication succeeded but the client lost its final response, confirm the rel
 Requires Go and Python 3. Use a fresh output directory and your actual source commit/timestamp. No GitHub token or publishing is involved:
 
 ```sh
-python3 scripts/release.py build --version v3.0.0 --platform darwin_arm64 \
+python3 scripts/release.py build --version v0.0.1 --platform darwin_arm64 \
   --out /tmp/jvmdiag-dist --commit FULL_40_CHARACTER_COMMIT \
   --date 2026-10-24T00:00:00Z
-python3 scripts/release.py smoke /tmp/jvmdiag-dist/jvmdiag_3.0.0_darwin_arm64.tar.gz
+python3 scripts/release.py smoke /tmp/jvmdiag-dist/jvmdiag_0.0.1_darwin_arm64.tar.gz
 python3 -m unittest discover -s tests -p 'test_*.py' -v
 ```
 

@@ -4,7 +4,7 @@ Changes follow [Semantic Versioning](https://semver.org/). Dates are recorded wh
 
 ## [Unreleased]
 
-## [3.0.0]
+## [0.0.1]
 
 - Native JVM diagnostics with workspace authorization, protected configuration and browser output sanitization.
 - Scoped JFR/HPROF evidence, confidence and explicit limitations; unavailable data is not reported as successful diagnosis.

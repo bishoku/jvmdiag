@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/hprof"
+	"github.com/bishoku/jvmdiag/internal/analyzer/hprof"
 )
 
 const (
@@ -217,7 +217,7 @@ func (s *Service) DownloadAndInstall() error {
 		s.failDownload("Invalid download URL: " + err.Error())
 		return err
 	}
-	req.Header.Set("User-Agent", "jvmdiag/3.0")
+	req.Header.Set("User-Agent", "jvmdiag")
 
 	resp, err := client.Do(req)
 	if err != nil {

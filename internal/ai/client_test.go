@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bishoku/jvmdiag/v3/internal/config"
+	"github.com/bishoku/jvmdiag/internal/config"
 )
 
 func TestChatTurnSlidingWindowAndClear(t *testing.T) {

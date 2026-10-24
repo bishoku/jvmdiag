@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/bishoku/jvmdiag/v3/internal/config"
+	"github.com/bishoku/jvmdiag/internal/config"
 	"runtime/debug"
 	"testing"
 )

@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
-	"github.com/bishoku/jvmdiag/v3/internal/testutil"
+	"github.com/bishoku/jvmdiag/internal/testutil"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -15,12 +15,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bishoku/jvmdiag/v3/internal/ai"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/mat"
-	"github.com/bishoku/jvmdiag/v3/internal/config"
-	"github.com/bishoku/jvmdiag/v3/internal/mcp"
-	"github.com/bishoku/jvmdiag/v3/internal/server"
-	"github.com/bishoku/jvmdiag/v3/internal/store"
+	"github.com/bishoku/jvmdiag/internal/ai"
+	"github.com/bishoku/jvmdiag/internal/analyzer/mat"
+	"github.com/bishoku/jvmdiag/internal/config"
+	"github.com/bishoku/jvmdiag/internal/mcp"
+	"github.com/bishoku/jvmdiag/internal/server"
+	"github.com/bishoku/jvmdiag/internal/store"
 )
 
 func makeMiniHprof() []byte {

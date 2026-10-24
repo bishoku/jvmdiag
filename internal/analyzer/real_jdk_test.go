@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/hprof"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/jfr"
+	"github.com/bishoku/jvmdiag/internal/analyzer/hprof"
+	"github.com/bishoku/jvmdiag/internal/analyzer/jfr"
 )
 
 // Opt in with JVMDIAG_TEST_JDK=/path/to/jdk. All artifacts belong to a fresh synthetic JVM.
