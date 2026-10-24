@@ -306,8 +306,8 @@ func (s *Server) executeStandaloneTool(ctx context.Context, toolName string, arg
 			return rep, true, err
 		}
 		if content != "" {
-			sum := threaddump.ParseContent("inline-threaddump.txt", content)
-			return threaddump.BuildReport(sum, content), true, nil
+			rep, _, err := threaddump.AnalyzeText("inline-threaddump.txt", content)
+			return rep, true, err
 		}
 		return "", true, fmt.Errorf("either 'path' or 'content' is required for analyze_thread_dump")
 
@@ -384,19 +384,25 @@ func (s *Server) executeStandaloneTool(ctx context.Context, toolName string, arg
 		var sb strings.Builder
 		sb.WriteString(fmt.Sprintf("Captured Live JVM Bundle for PID %d (%s)\n\n", pid, strings.Join(bundle.Notes, "; ")))
 		if len(bundle.ThreadDumpPaths) >= 2 {
-			if diffRep, derr := threaddump.CompareFiles(bundle.ThreadDumpPaths); derr == nil {
-				sb.WriteString(diffRep + "\n")
+			diffRep, err := threaddump.CompareFiles(bundle.ThreadDumpPaths)
+			if err != nil {
+				return "", true, fmt.Errorf("captured thread snapshot comparison failed: %w", err)
 			}
+			sb.WriteString(diffRep + "\n")
 		}
 		if len(bundle.ThreadDumpPaths) >= 1 {
-			if tdRep, _, terr := threaddump.AnalyzeFile(bundle.ThreadDumpPaths[0]); terr == nil {
-				sb.WriteString(tdRep + "\n")
+			tdRep, _, err := threaddump.AnalyzeFile(bundle.ThreadDumpPaths[0])
+			if err != nil {
+				return "", true, fmt.Errorf("captured thread dump analysis failed: %w", err)
 			}
+			sb.WriteString(tdRep + "\n")
 		}
 		if bundle.NMTCrashPath != "" {
-			if nmtRep, _, nerr := nmtcrash.AnalyzeFile(bundle.NMTCrashPath); nerr == nil {
-				sb.WriteString(nmtRep + "\n")
+			nmtRep, _, err := nmtcrash.AnalyzeFile(bundle.NMTCrashPath)
+			if err != nil {
+				return "", true, fmt.Errorf("captured NMT analysis failed: %w", err)
 			}
+			sb.WriteString(nmtRep + "\n")
 		}
 		return sb.String(), true, nil
 	}

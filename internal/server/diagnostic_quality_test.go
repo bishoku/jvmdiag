@@ -34,6 +34,9 @@ func TestInvalidDiagnosticsFailAndLimitedResultsStayExplicit(t *testing.T) {
 		{"truncated heap", "/api/heap/upload", "broken.hprof", validHeap[:len(validHeap)-9], "FAILED", "failed"},
 		{"invalid JFR JSON", "/api/jfr/upload", "broken.json", []byte(`{"recording":{"events":[`), "FAILED", "failed"},
 		{"arbitrary JFR text", "/api/jfr/upload", "broken.jfr", []byte("jdk.VirtualThreadPinned metadata is not an event"), "FAILED", "failed"},
+		{"arbitrary thread text", "/api/thread-dump/upload", "broken.tdump", []byte("not JVM diagnostic data"), "FAILED", "failed"},
+		{"malformed thread JSON", "/api/thread-dump/upload", "broken.json", []byte(`{"threadDump":`), "FAILED", "failed"},
+		{"arbitrary native text", "/api/crash/upload", "broken.txt", []byte("not JVM diagnostic data"), "FAILED", "failed"},
 		{"limited heap metadata", "/api/heap/upload", "limited.hprof", limitedHeap, "COMPLETED", "limited"},
 		{"empty event export", "/api/jfr/upload", "empty.json", []byte(`{"recording":{"events":[]}}`), "COMPLETED", "limited"},
 	} {

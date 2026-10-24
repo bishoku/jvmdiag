@@ -176,7 +176,7 @@ func AnalyzeText(content string) (string, *Summary, error) {
 	case hasNmt:
 		sum.ReportType = "NMT_REPORT"
 	default:
-		sum.ReportType = "UNKNOWN_NATIVE_DIAGNOSTIC"
+		return "", nil, fmt.Errorf("invalid or unsupported native diagnostic: no recognizable NMT metrics or JVM crash records")
 	}
 
 	buildSuspects(sum)
@@ -263,9 +263,11 @@ func formatReport(sum *Summary) string {
 		}
 		sb.WriteString(fmt.Sprintf("\n--- NATIVE MEMORY (NMT) OVERVIEW ---\n"))
 		sb.WriteString(fmt.Sprintf("Total Reserved:         %.1f MB (%d KB)\n", float64(sum.TotalReservedKB)/1024.0, sum.TotalReservedKB))
-		sb.WriteString(fmt.Sprintf("Total Committed (RSS):  %.1f MB (%d KB)\n", float64(sum.TotalCommittedKB)/1024.0, sum.TotalCommittedKB))
+		sb.WriteString(fmt.Sprintf("NMT Total Committed:   %.1f MB (%d KB)\n", float64(sum.TotalCommittedKB)/1024.0, sum.TotalCommittedKB))
 		sb.WriteString(fmt.Sprintf("Java Heap Committed:    %.1f MB (%d KB)\n", float64(sum.HeapCommittedKB)/1024.0, sum.HeapCommittedKB))
 		sb.WriteString(fmt.Sprintf("Off-Heap Committed:     %.1f MB (%d KB, %.1f%% of Total)\n", float64(sum.OffHeapCommittedKB)/1024.0, sum.OffHeapCommittedKB, offPct))
+		sb.WriteString("Scope: NMT committed memory, not process RSS or cgroup memory usage. NMT does not track all native allocations.\n")
+		sb.WriteString("Off-Heap Committed is NMT total committed minus Java heap committed.\n")
 	}
 
 	if len(sum.Suspects) > 0 {

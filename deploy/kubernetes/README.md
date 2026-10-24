@@ -91,7 +91,7 @@ The JDK base includes `tar`, which `kubectl cp` requires. Dumps and reports may 
 
 ## Repeatable integration test
 
-Unit tests are offline: `go test -race ./internal/capture ./cmd/jvmdiag`. Real tests require Docker, kind, kubectl 1.32+ and Python 3. They operate on their own namespace in an explicitly selected kind context. The test script rejects other context names and deletes its namespace in `finally`; the commands below use a separate kubeconfig and leave the user's current context unchanged.
+Unit tests are offline: `go test -race ./internal/capture ./cmd/jvmdiag`. Real tests require Docker, kind, kubectl 1.32+ and Python 3. They operate on their own namespace in an explicitly selected kind context. The test script rejects other context names unless the exact `microk8s` context is explicitly enabled with `--allow-microk8s` and deletes its namespace in `finally`; the commands below use a separate kubeconfig and leave the user's current context unchanged.
 
 ```sh
 docker build -f Dockerfile.diagnostic -t jvmdiag-diagnostic:k8s-test .
@@ -103,8 +103,45 @@ python3 tests/kubernetes/e2e.py --kubeconfig /tmp/jvmdiag-e2e.kubeconfig --conte
 kind delete cluster --name jvmdiag-e2e --kubeconfig /tmp/jvmdiag-e2e.kubeconfig
 ```
 
-The integration test uses a Java JRE target without `jcmd`, separate mount namespaces, no shared `/tmp`, a Restricted-policy namespace and operator RBAC. It checks discovery, actual thread/heap/JFR/NMT capture and analysis, target restart count, non-init PIDs in a shared process namespace, operator artifact extraction with `kubectl cp`, denied UID/PID/attach cases and explicit NMT absence. It does not certify every CRI runtime, security policy, JDK or architecture.
+### Run on an existing local MicroK8s cluster
+
+This creates synthetic Java Pods and a Role/RoleBinding in a unique `jvmdiag-test-*` namespace, then deletes that namespace and waits for cleanup. It does not change existing workloads, the current kubectl context, cluster authorization or addons. Images remain in the local image stores for reuse.
+
+Use MicroK8s' matching kubectl instead of an older system client. The script accepts a kubectl executable, so a small wrapper supplies the `microk8s kubectl` subcommand:
+
+```sh
+docker build -f Dockerfile.diagnostic -t jvmdiag-diagnostic:k8s-test .
+docker build -f tests/kubernetes/Dockerfile.fixture -t jvmdiag-fixture:k8s-test .
+TEST_DIR=$(mktemp -d /tmp/jvmdiag-microk8s.XXXXXX)
+chmod 700 "$TEST_DIR"
+printf '#!/bin/sh\nexec microk8s kubectl "$@"\n' > "$TEST_DIR/kubectl"
+chmod 700 "$TEST_DIR/kubectl"
+(umask 077; microk8s config > "$TEST_DIR/kubeconfig")
+docker save -o "$TEST_DIR/images.tar" jvmdiag-diagnostic:k8s-test jvmdiag-fixture:k8s-test
+microk8s ctr image import "$TEST_DIR/images.tar"
+python3 tests/kubernetes/e2e.py --kubectl "$TEST_DIR/kubectl" \
+  --kubeconfig "$TEST_DIR/kubeconfig" --context microk8s --allow-microk8s \
+  --results-dir "$TEST_DIR/results"
+```
+
+On installations where `microk8s ctr` asks for sudo but the current user already has access through the `microk8s` group, the equivalent import is:
+
+```sh
+/snap/microk8s/current/bin/ctr \
+  --address /var/snap/microk8s/common/run/containerd.sock --namespace k8s.io \
+  images import "$TEST_DIR/images.tar"
+```
+
+If RBAC is disabled, the script fails rather than claiming denial enforcement. To validate capture on such a development cluster without changing its authorization, add `--allow-unrestricted-rbac`. It prints `SKIP` for RBAC denial checks; allowed operator actions and all capture tests still run. A pass with this option is **not** proof of least-privilege enforcement.
+
+`--results-dir` must be new and retains synthetic debugger logs, Pod snapshots and exported thread/NMT/heap/JFR/report files. Store it privately; Pod snapshots include environment/runtime metadata. After reviewing results, remove the temporary test directory (including the kubeconfig) when no longer needed. If a run is force-killed before cleanup, inspect and remove only its reported `jvmdiag-test-*` namespace.
+
+The integration test uses a Java JRE target without `jcmd`, separate mount namespaces, no shared `/tmp`, a Restricted-policy namespace and operator RBAC. It checks discovery, actual thread/heap/JFR/NMT capture and analysis, target restart count, non-init PIDs in a shared process namespace, operator artifact extraction with `kubectl cp`, private output permissions, staging/socket-bridge/JFR cleanup, denied UID/GID/PID/attach cases and explicit NMT absence. It does not certify every CRI runtime, security policy, JDK or architecture.
 
 References: [Kubernetes ephemeral containers](https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/), [debug profiles and process targeting](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/), [jcmd identity and discovery requirements](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jcmd.html), [OpenJDK Linux attach implementation](https://github.com/openjdk/jdk17u/blob/master/src/jdk.attach/linux/classes/sun/tools/attach/VirtualMachineImpl.java).
 
 Validated on 2026-10-24: Linux arm64, kind Kubernetes 1.32.2, containerd 2.0.3, matching kubectl 1.32.2, Temurin HotSpot JDK/JRE 17.0.20.1+1. AMD64 builds compile, but runtime validation here used ARM64.
+
+Validated on 2026-10-24 on local MicroK8s: Linux amd64, Kubernetes/kubectl 1.35.6, containerd 2.1.6, matching Temurin JDK/JRE 17.0.20.1+1. Capture, analysis, extraction, cleanup and failure scenarios passed; RBAC denial checks were explicitly skipped because cluster authorization was unrestricted. See the [review and validation report](../../docs/REVIEW-2026-10-24.md) for evidence and scope.
+
+The same MicroK8s matrix was rerun successfully after the diagnostic-input fixes, including invalid thread/NMT rejection, missing incident snapshots and the corrected NMT committed label. The review report records the second run separately.

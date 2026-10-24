@@ -60,9 +60,10 @@ func Analyze(ctx context.Context, matSvc *mat.Service, in Input) (string, error)
 		tdSummary = s
 		if len(in.ThreadDumpPaths) >= 2 {
 			diff, derr := threaddump.CompareFiles(in.ThreadDumpPaths)
-			if derr == nil {
-				tdDiffReport = diff
+			if derr != nil {
+				return "", fmt.Errorf("thread snapshot comparison failed: %w", derr)
 			}
+			tdDiffReport = diff
 		}
 	}
 
