@@ -142,7 +142,24 @@ class ReleaseSafetyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             self.candidates(temp)
             existing={'annotations':{'org.opencontainers.image.version':'3.1.0'}}
-            with mock.patch.object(promote_images,'inspect',return_value=existing),mock.patch.object(promote_images,'docker',side_effect=AssertionError('must not downgrade')):
+            with mock.patch.object(promote_images,'inspect',return_value=existing),mock.patch.object(promote_images,'identity',return_value=existing['annotations']),mock.patch.object(promote_images,'docker',side_effect=AssertionError('must not downgrade')):
                 promote_images.promote(temp,'ghcr.io/bishoku/jvmdiag','v3.0.0',COMMIT,aliases=True)
+
+    def test_docker_manifest_identity_uses_both_child_configs(self):
+        image='ghcr.io/bishoku/jvmdiag'
+        index={'manifests':[{'digest':'sha256:'+str(i+1)*64,'platform':{'os':'linux','architecture':arch}} for i,arch in enumerate(('amd64','arm64'))]}
+        labels={'org.opencontainers.image.version':'0.0.1','org.opencontainers.image.revision':COMMIT,'org.opencontainers.image.source':'https://github.com/bishoku/jvmdiag'}
+        configs=[{'os':'linux','architecture':arch,'config':{'Labels':dict(labels)}} for arch in ('amd64','arm64')]
+        def check(data):
+            with mock.patch.object(promote_images,'docker',side_effect=[json.dumps(c) for c in data]):
+                return promote_images.identity(image,index)
+        self.assertEqual(check(configs)['org.opencontainers.image.version'],'0.0.1')
+        configs[1]['config']['Labels']['org.opencontainers.image.version']='0.0.2'
+        with self.assertRaisesRegex(ValueError,'mixed child'):check(configs)
+        configs[1]['config']['Labels']['org.opencontainers.image.version']='0.0.1'
+        index['annotations']={'org.opencontainers.image.version':'0.0.2'}
+        with self.assertRaisesRegex(ValueError,'annotations disagree'):check(configs)
+        index.pop('annotations');configs[1]['architecture']='amd64'
+        with self.assertRaisesRegex(ValueError,'platform mismatch'):check(configs)
 
 if __name__=='__main__':unittest.main()
