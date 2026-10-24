@@ -1,0 +1,25 @@
+name: Bug report
+description: Report an installation, capture or analysis problem.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities follow SECURITY.md. Never upload production dumps, secrets or personal data."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "jvmdiag version, OS/architecture, JDK vendor/version, GC and Kubernetes/runtime if relevant."
+    validations: {required: true}
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction and expected behavior
+      description: "Provide safe commands and a minimal synthetic input or link to an existing corpus fixture."
+    validations: {required: true}
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Observed behavior and evidence
+      description: "Include sanitized errors and assessment status; distinguish observations from assumptions."
+    validations: {required: true}

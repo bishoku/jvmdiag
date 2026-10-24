@@ -1,0 +1,10 @@
+ARG DIAGNOSTIC_IMAGE=jvmdiag-diagnostic:k8s-test
+ARG JRE_IMAGE=eclipse-temurin:17-jre-jammy
+FROM ${DIAGNOSTIC_IMAGE} AS compile
+COPY tests/kubernetes/Fixture.java /tmp/Fixture.java
+RUN javac --release 17 -d /tmp /tmp/Fixture.java
+FROM ${JRE_IMAGE}
+COPY --from=compile /tmp/Fixture.class /fixture/Fixture.class
+RUN touch /tmp/target-only-marker
+USER 10001:10001
+ENTRYPOINT ["java", "-Xms32m", "-Xmx64m", "-XX:ActiveProcessorCount=2", "-cp", "/fixture", "Fixture"]

@@ -1,0 +1,8 @@
+{
+  "name": "jvmdiag-browser-regressions",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Test-only browser dependencies; never bundled in release binaries",
+  "devDependencies": {"playwright": "1.62.1"},
+  "scripts": {"test": "node ui-security.cjs"}
+}

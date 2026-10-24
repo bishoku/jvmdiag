@@ -1,0 +1,6 @@
+* @bishoku
+/.github/ @bishoku
+/scripts/ @bishoku
+/Dockerfile* @bishoku
+/LICENSE @bishoku
+/NOTICE @bishoku

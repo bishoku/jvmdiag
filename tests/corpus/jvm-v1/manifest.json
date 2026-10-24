@@ -1,0 +1,1525 @@
+{
+  "capturedAtUTC": "2026-10-24T06:01:35.960949+00:00",
+  "entries": [
+    {
+      "actualCollectors": [
+        "G1 Young Generation",
+        "G1 Old Generation"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 164529,
+          "compressedSha256": "e6fdb7d2a0405e25e6775b35bd669d33f381fe00ba0947e92b331a2254eced59",
+          "file": "events.json.gz",
+          "originalSha256": "aaa09f5ec229e5bd7eb5969939c669db0be7b3c5a3bba192b38817f3bd7bc70e",
+          "sha256": "aaa09f5ec229e5bd7eb5969939c669db0be7b3c5a3bba192b38817f3bd7bc70e"
+        },
+        "gc.log": {
+          "bytes": 11325,
+          "compressedSha256": "c5248f9a230ece16fc9279b23a555c7bc021c1052330b1cc96363b17992c6876",
+          "file": "gc.log.gz",
+          "originalSha256": "3eaf4873ffa60805d574df3f533ec4cb653084acb651aab9b6e66feba7deafc6",
+          "sha256": "3eaf4873ffa60805d574df3f533ec4cb653084acb651aab9b6e66feba7deafc6"
+        },
+        "heap.hprof": {
+          "bytes": 6606090,
+          "compressedSha256": "1b8fd46715599f35fb92e485d68376a137045741c89cf6e6afbcba400c899a8f",
+          "file": "heap.hprof.gz",
+          "originalSha256": "0a9597bcd33d00060355db9ad92dedae191a4a603d4485b41376f03d9164d302",
+          "sha256": "4becd17204daf7eb2c44d8ff9c361a09228011bf679c826768e4ced1c0372b32"
+        },
+        "nmt.txt": {
+          "bytes": 4044,
+          "compressedSha256": "5ffc9e7e963c5404e50c1257b9d1c71ee75f57e0e0587a0546401a58ec6e5571",
+          "file": "nmt.txt.gz",
+          "originalSha256": "3c9468c4c60901cbb95c98694c069559174fa833eae497fa934ea6d38551ea9f",
+          "sha256": "3c9468c4c60901cbb95c98694c069559174fa833eae497fa934ea6d38551ea9f"
+        },
+        "recording.jfr": {
+          "bytes": 366874,
+          "compressedSha256": "de23d13d116e81a492c0232f71a5edd90445a23caa17d1765c256df8b2fa7b96",
+          "file": "recording.jfr.gz",
+          "originalSha256": "ddcc710bbc74b4a588c08bdcba4e56800c69af92442e54165d4affbc987be584",
+          "sha256": "8ebf839ebc23b2a6bd1376027d13ad7ab193a2ea4427f3863ba52f269cf9be34"
+        },
+        "summary.txt": {
+          "bytes": 11628,
+          "compressedSha256": "6ce407c281c04225b8bd9b251d4f2218d2013811de0bb8b856aaea8267d5e4d8",
+          "file": "summary.txt.gz",
+          "originalSha256": "73d44bf61102fff29d26ead9e294799614a10d9e99000ceb57e48658160bf7c7",
+          "sha256": "73d44bf61102fff29d26ead9e294799614a10d9e99000ceb57e48658160bf7c7"
+        },
+        "threads.txt": {
+          "bytes": 8581,
+          "compressedSha256": "e61d1cbe6f4467190a173cd2571ba52a7568cebedd5586a5f632983257adb7df",
+          "file": "threads.txt.gz",
+          "originalSha256": "346dda90c484b2fbdf849eafced3171dc1e5988c8ab023fe4a589d2dc94b3204",
+          "sha256": "346dda90c484b2fbdf849eafced3171dc1e5988c8ab023fe4a589d2dc94b3204"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 1.721,
+          "pauseCount": 8,
+          "totalPauseMs": 10.074
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 2662538,
+          "recordKinds": {
+            "instances": 40107,
+            "objectArrays": 5813,
+            "primitiveArrays": 14121
+          },
+          "records": 60041,
+          "rootTags": {
+            "1": 94,
+            "2": 1,
+            "3": 44,
+            "5": 1382,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 46204680
+          },
+          "counts": {
+            "jdk.ExecutionSample": 1,
+            "jdk.GCPhasePause": 5,
+            "jdk.GarbageCollection": 5,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 1.708083,
+          "maxPauseMs": 1.708083,
+          "tlabReservedBytes": 0,
+          "total": 71
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 8,
+            "RUNNABLE": 11,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 24
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseG1GC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "g1",
+      "id": "temurin17-g1",
+      "javaVersionOutput": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+      "jdk": "17.0.20+8",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Eclipse Adoptium"
+    },
+    {
+      "actualCollectors": [
+        "PS MarkSweep",
+        "PS Scavenge"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 176153,
+          "compressedSha256": "7614a959bf84ffa723310294bc2e4d557f9b00b3fcfced4b90ce15b23334351e",
+          "file": "events.json.gz",
+          "originalSha256": "1f3c7f864894d136fdcc409f0fd417ab5544c620fc2936c4445d7b239f43a4a3",
+          "sha256": "1f3c7f864894d136fdcc409f0fd417ab5544c620fc2936c4445d7b239f43a4a3"
+        },
+        "gc.log": {
+          "bytes": 13024,
+          "compressedSha256": "cce7393df59da157379271f79a2e17e3c370d4ef5d1b002c2f332d71a8a0de9b",
+          "file": "gc.log.gz",
+          "originalSha256": "a9d8e7624901f420ea8c9b7f7948aaf7ebb1482d0d236725ad7a232ffb1717f8",
+          "sha256": "a9d8e7624901f420ea8c9b7f7948aaf7ebb1482d0d236725ad7a232ffb1717f8"
+        },
+        "heap.hprof": {
+          "bytes": 6100156,
+          "compressedSha256": "1459f0ee3cc6ae478acca6a18ec067e33f53090b31f17a0f59f6a184c8f0233b",
+          "file": "heap.hprof.gz",
+          "originalSha256": "c7c3efa63eea384ed978463c85929c1bb2e6244e2f1c5d9e89ef70b69cd8510f",
+          "sha256": "1aa416bedf3c1d9c27143740666f7c9c4272825f97fa026d03e5d0ea9cbee8f7"
+        },
+        "nmt.txt": {
+          "bytes": 4041,
+          "compressedSha256": "d19fd2b1d0a04e9a56ffcee8c4e8ce1c5fe0ab2a6c0278b50eb4b98dd9894e2f",
+          "file": "nmt.txt.gz",
+          "originalSha256": "b2b5c8bca23c5b6f7578f2b508269b0679628ae6f6da07a1acdad3c3dec267da",
+          "sha256": "b2b5c8bca23c5b6f7578f2b508269b0679628ae6f6da07a1acdad3c3dec267da"
+        },
+        "recording.jfr": {
+          "bytes": 375586,
+          "compressedSha256": "237b39b263a2c795dbb246b2d23d2869bafacf418159b594209d113424ee7370",
+          "file": "recording.jfr.gz",
+          "originalSha256": "1cceb6693ca334381dfaf035741e4dc29b4b9c71e6287c4767d8801454071118",
+          "sha256": "0b504110ea921bcfe65547722485df4f97f7162ffc3cdca67bc8352c940a1166"
+        },
+        "summary.txt": {
+          "bytes": 11628,
+          "compressedSha256": "133251ea03b86d09c800cde095b7dd0c05695dc125febf1684e4949c6cc9476c",
+          "file": "summary.txt.gz",
+          "originalSha256": "4f74ce4959880d05101491e7267bb9d69c351be6a2830f900e984eba9f97b4a1",
+          "sha256": "4f74ce4959880d05101491e7267bb9d69c351be6a2830f900e984eba9f97b4a1"
+        },
+        "threads.txt": {
+          "bytes": 8199,
+          "compressedSha256": "57b5cebc0f1ca03e16401db006e68f813d6261514e5570bae665c72098729f16",
+          "file": "threads.txt.gz",
+          "originalSha256": "4ad449489a6c2e06564be5add72a38d1b2f113c9a652d2dcb76e40e5f0ef1614",
+          "sha256": "4ad449489a6c2e06564be5add72a38d1b2f113c9a652d2dcb76e40e5f0ef1614"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 3.718,
+          "pauseCount": 14,
+          "totalPauseMs": 17.61
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 2380963,
+          "recordKinds": {
+            "instances": 34756,
+            "objectArrays": 5571,
+            "primitiveArrays": 9431
+          },
+          "records": 49758,
+          "rootTags": {
+            "1": 94,
+            "2": 1,
+            "3": 44,
+            "5": 1388,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 39533352
+          },
+          "counts": {
+            "jdk.ExecutionSample": 1,
+            "jdk.GCPhasePause": 11,
+            "jdk.GarbageCollection": 11,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 3.65125,
+          "maxPauseMs": 3.65125,
+          "tlabReservedBytes": 0,
+          "total": 83
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 4,
+            "RUNNABLE": 11,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 20
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseParallelGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "parallel",
+      "id": "temurin17-parallel",
+      "javaVersionOutput": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+      "jdk": "17.0.20+8",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Eclipse Adoptium"
+    },
+    {
+      "actualCollectors": [
+        "Copy",
+        "MarkSweepCompact"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 171750,
+          "compressedSha256": "3362f87326d11a9e5768ff9e917844f47e99fd624daf87a26e6758da9da0a9fd",
+          "file": "events.json.gz",
+          "originalSha256": "3ab6703c2a5a75e2ce5eba2e804a8aeff5986724edc0a092df88ef0cc86bda1a",
+          "sha256": "3ab6703c2a5a75e2ce5eba2e804a8aeff5986724edc0a092df88ef0cc86bda1a"
+        },
+        "gc.log": {
+          "bytes": 12319,
+          "compressedSha256": "c6b51fa2057707781d92a5a11a03cdd2bd74f1f44c335bf5dfbe28eba65e39d2",
+          "file": "gc.log.gz",
+          "originalSha256": "7984e6eb21cebbce0edec1844727bfa06974fdb961412572a3295ddeb51cf2b6",
+          "sha256": "7984e6eb21cebbce0edec1844727bfa06974fdb961412572a3295ddeb51cf2b6"
+        },
+        "heap.hprof": {
+          "bytes": 6116756,
+          "compressedSha256": "2fc27b0fb83c56471fb2f4332cd328e6cbc658a128d0a83ed76430f73f0ea74d",
+          "file": "heap.hprof.gz",
+          "originalSha256": "10acf6755a85abcf27638017fd935c39cc33411f4dc66c629aa555743f79f2e6",
+          "sha256": "154bc7081dbff8a50ed13801723fca6218fc2f5ecda57a09d3fd013da23e61a2"
+        },
+        "nmt.txt": {
+          "bytes": 4031,
+          "compressedSha256": "86fc44436b574f39a194548eb790cfdc14045e2224ff5f5b7c25006612623ded",
+          "file": "nmt.txt.gz",
+          "originalSha256": "f699936d99b79861cfb298faae93d03ffd8ccd69b70ac375cc4e265f34a40cc0",
+          "sha256": "f699936d99b79861cfb298faae93d03ffd8ccd69b70ac375cc4e265f34a40cc0"
+        },
+        "recording.jfr": {
+          "bytes": 367462,
+          "compressedSha256": "6c02d1075cf3fa54fd246ecfe943243caec6545d67e286f0f01c465851c75e62",
+          "file": "recording.jfr.gz",
+          "originalSha256": "5204a059ebcd9c8f8cce18be3bd80a2847d1b4e388461d460bc51bfc521a3e1c",
+          "sha256": "b6836132feaaba84b2ed0597c0d851b31463bdeae5f762410f815d27154a3370"
+        },
+        "summary.txt": {
+          "bytes": 11628,
+          "compressedSha256": "bbfa005a86427ba763be76194e4107b07c6f1e26c9946e8f039f1d10c761abd9",
+          "file": "summary.txt.gz",
+          "originalSha256": "283985aab96804e6de6da390927f78354d2f8f615f99a1bd9ab0ae56ecb9c460",
+          "sha256": "283985aab96804e6de6da390927f78354d2f8f615f99a1bd9ab0ae56ecb9c460"
+        },
+        "threads.txt": {
+          "bytes": 8005,
+          "compressedSha256": "ddec237ce17f79f4589d4cfba7da5d991ce0d3c294b2f7ee28f4cf4ebe29a383",
+          "file": "threads.txt.gz",
+          "originalSha256": "286260f214ef3185c5439eab127b3cddeb52637cc78c0bb4ef6dccc4d82f38ad",
+          "sha256": "286260f214ef3185c5439eab127b3cddeb52637cc78c0bb4ef6dccc4d82f38ad"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 2.432,
+          "pauseCount": 13,
+          "totalPauseMs": 14.42
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 2396168,
+          "recordKinds": {
+            "instances": 34760,
+            "objectArrays": 5571,
+            "primitiveArrays": 9503
+          },
+          "records": 49834,
+          "rootTags": {
+            "1": 93,
+            "2": 1,
+            "3": 44,
+            "5": 1388,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 36636128
+          },
+          "counts": {
+            "jdk.GCPhasePause": 11,
+            "jdk.GarbageCollection": 11,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 2.410584,
+          "maxPauseMs": 2.410584,
+          "tlabReservedBytes": 0,
+          "total": 82
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 2,
+            "RUNNABLE": 11,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 18
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "serial",
+      "id": "temurin17-serial",
+      "javaVersionOutput": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+      "jdk": "17.0.20+8",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Eclipse Adoptium"
+    },
+    {
+      "actualCollectors": [
+        "ZGC Cycles",
+        "ZGC Pauses"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 188538,
+          "compressedSha256": "a88a9c47386db301c33ef4b9c88f8a44787a832b92ec21f7c2cddfbb817b5d6f",
+          "file": "events.json.gz",
+          "originalSha256": "eb9496a8252666abc33a88d0ab78dfbf8e749606c2d205f68a5c2e22dd8bd6f9",
+          "sha256": "eb9496a8252666abc33a88d0ab78dfbf8e749606c2d205f68a5c2e22dd8bd6f9"
+        },
+        "gc.log": {
+          "bytes": 15558,
+          "compressedSha256": "774cc9b54e4733f76f0ff68fa4bb6caf71b039c63cd5b544e4ee498fbe01edc3",
+          "file": "gc.log.gz",
+          "originalSha256": "484fc7cbcf8ae054d564002fa4266243d47fc4444c372c0be0866b27895650c4",
+          "sha256": "484fc7cbcf8ae054d564002fa4266243d47fc4444c372c0be0866b27895650c4"
+        },
+        "heap.hprof": {
+          "bytes": 6143474,
+          "compressedSha256": "6c93f97041b61ed929d6140c1ddb4b963037b0ef84f579c4539e283bd5ab2863",
+          "file": "heap.hprof.gz",
+          "originalSha256": "565a7043275b0fbd36d6da362f940d9924d5d27a61bae27503aa117cebd34cd5",
+          "sha256": "0f7c2b480a8b5b328e5364fa61cdf4c382c648c97ea3adbd0f8dfbdde6cc7f30"
+        },
+        "nmt.txt": {
+          "bytes": 4191,
+          "compressedSha256": "f5f5e3fdd98158f8a16806c9cdd41620d714a225b60ca5568daeb31ff700dc99",
+          "file": "nmt.txt.gz",
+          "originalSha256": "f8486c6cd6d706f8dbc1efcaedece7e729c1ad6df68c4587883bc286066c4c4f",
+          "sha256": "f8486c6cd6d706f8dbc1efcaedece7e729c1ad6df68c4587883bc286066c4c4f"
+        },
+        "recording.jfr": {
+          "bytes": 366266,
+          "compressedSha256": "d00294ddb26d32d0fb486df6b9699991c428edf074ababb2a2cd8caea1f17c33",
+          "file": "recording.jfr.gz",
+          "originalSha256": "628b4d130efb9003fb3abb49c3a873e7e52face6bc6118d051f2420e18285bf8",
+          "sha256": "d9a8244e9ef6765a54d127d84a8d59ba9820a712dec16284007c3a5798a47248"
+        },
+        "summary.txt": {
+          "bytes": 11628,
+          "compressedSha256": "26556ed85ab513957a8faf448177f0696e2edad07b6cb737ad8a62320ebdbd2f",
+          "file": "summary.txt.gz",
+          "originalSha256": "2ddb6dead7a72cda38c96657a70a3d2cc5edd67fbed7cd536ab569733f30f007",
+          "sha256": "2ddb6dead7a72cda38c96657a70a3d2cc5edd67fbed7cd536ab569733f30f007"
+        },
+        "threads.txt": {
+          "bytes": 8667,
+          "compressedSha256": "683164aebd2e35d05c25f3b009c1baf63eab8300e96718d7030b163c222b1136",
+          "file": "threads.txt.gz",
+          "originalSha256": "8198f2f804f0b079d34e09851333f75a7baa3c3df7f9f44f2d0261dcfd1ad0f9",
+          "sha256": "8198f2f804f0b079d34e09851333f75a7baa3c3df7f9f44f2d0261dcfd1ad0f9"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 0.003,
+          "pauseCount": 12,
+          "totalPauseMs": 0.021
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 2408970,
+          "recordKinds": {
+            "instances": 35350,
+            "objectArrays": 5608,
+            "primitiveArrays": 9437
+          },
+          "records": 50395,
+          "rootTags": {
+            "1": 93,
+            "2": 1,
+            "3": 44,
+            "5": 1388,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 37238240
+          },
+          "counts": {
+            "jdk.GCPhasePause": 12,
+            "jdk.GarbageCollection": 4,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 6.602374999999999,
+          "maxPauseMs": 0.0025830000000000002,
+          "tlabReservedBytes": 0,
+          "total": 76
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 9,
+            "RUNNABLE": 11,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 25
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseZGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "zgc",
+      "id": "temurin17-zgc",
+      "javaVersionOutput": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment Temurin-17.0.20+8 (build 17.0.20+8)\nOpenJDK 64-Bit Server VM Temurin-17.0.20+8 (build 17.0.20+8, mixed mode, sharing)\n",
+      "jdk": "17.0.20+8",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Eclipse Adoptium"
+    },
+    {
+      "actualCollectors": [
+        "G1 Young Generation",
+        "G1 Concurrent GC",
+        "G1 Old Generation"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 254244,
+          "compressedSha256": "a0fc34f187b0322d53c18a1a21c196102adfb6a52cfbde717f6662489151574e",
+          "file": "events.json.gz",
+          "originalSha256": "bca89d6348fe345319c2a6d6b68fa73425b1d26057795408051eb9e2fbdde746",
+          "sha256": "bca89d6348fe345319c2a6d6b68fa73425b1d26057795408051eb9e2fbdde746"
+        },
+        "gc.log": {
+          "bytes": 11072,
+          "compressedSha256": "f3cd45b1fa55c703bd9c30402ecda64257991c4eb62d42ded83a4e6de2423f09",
+          "file": "gc.log.gz",
+          "originalSha256": "160fa787db1ce537c4d4027513254abc23d8666c189cacc40ea70dc4a552c309",
+          "sha256": "160fa787db1ce537c4d4027513254abc23d8666c189cacc40ea70dc4a552c309"
+        },
+        "heap.hprof": {
+          "bytes": 7780417,
+          "compressedSha256": "aeeeb3a3cb85b5623347473bb8680f2fdcd0c953d1eb140252b04b8a4ddadbfc",
+          "file": "heap.hprof.gz",
+          "originalSha256": "a7e5a3d77b5e8aa2604d8b76d41913b11df3c664a741209dfcf3a33afa7602f7",
+          "sha256": "d901505044791331f474dfab856c0e09786864f347222dde1fbd605c3fed07c9"
+        },
+        "nmt.txt": {
+          "bytes": 4883,
+          "compressedSha256": "f129f7fb22c27ebddca282e4b2f8214f3dc5042665c50b21e4320a04d8c664ba",
+          "file": "nmt.txt.gz",
+          "originalSha256": "f2d6449c2c2bce05b733681f934d21ecaf6d4514aeafa67e920ac84772449b08",
+          "sha256": "f2d6449c2c2bce05b733681f934d21ecaf6d4514aeafa67e920ac84772449b08"
+        },
+        "recording.jfr": {
+          "bytes": 405035,
+          "compressedSha256": "d85b2f87a67567e52122bb349bb959362de56576e054d0284c939010fede7c7c",
+          "file": "recording.jfr.gz",
+          "originalSha256": "bf4b28859159295bd684a5bcc530ded817e1ca173c425998bd62414105c08caf",
+          "sha256": "c83744e975d14076f1f946b4ca156e041c09f1a372974f5d0c8371ea3b6bf3ff"
+        },
+        "summary.txt": {
+          "bytes": 12156,
+          "compressedSha256": "a51a7f6db987b0cd07767949700cf12a940565cab3943a3968b93f967618e057",
+          "file": "summary.txt.gz",
+          "originalSha256": "81beced698435f8369201f2dcea2923c050726b19d64467db622b8caebaa5280",
+          "sha256": "81beced698435f8369201f2dcea2923c050726b19d64467db622b8caebaa5280"
+        },
+        "threads.txt": {
+          "bytes": 9081,
+          "compressedSha256": "af79de6981719066445706360b64bfd0549718550c5f6cec6a04aeb67c86c3a9",
+          "file": "threads.txt.gz",
+          "originalSha256": "e462015c78333009266b010f409ffedd49c1a61d4fc3e84e09bad4e148181a0d",
+          "sha256": "e462015c78333009266b010f409ffedd49c1a61d4fc3e84e09bad4e148181a0d"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 2.105,
+          "pauseCount": 7,
+          "totalPauseMs": 11.942
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 3124936,
+          "recordKinds": {
+            "instances": 47638,
+            "objectArrays": 6916,
+            "primitiveArrays": 17438
+          },
+          "records": 71992,
+          "rootTags": {
+            "1": 97,
+            "2": 1,
+            "3": 72,
+            "5": 1716,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 24858584
+          },
+          "counts": {
+            "jdk.ExecutionSample": 2,
+            "jdk.GCPhasePause": 6,
+            "jdk.GarbageCollection": 6,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 2.087583,
+          "maxPauseMs": 2.087583,
+          "tlabReservedBytes": 0,
+          "total": 74
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 9,
+            "RUNNABLE": 10,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 24
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseG1GC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "g1",
+      "id": "oracle25-g1",
+      "javaVersionOutput": "java version \"25.0.3\" 2026-04-21 LTS\nJava(TM) SE Runtime Environment (build 25.0.3+9-LTS-195)\nJava HotSpot(TM) 64-Bit Server VM (build 25.0.3+9-LTS-195, mixed mode, sharing)\n",
+      "jdk": "25.0.3+9-LTS-195",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Oracle Corporation"
+    },
+    {
+      "actualCollectors": [
+        "PS MarkSweep",
+        "PS Scavenge"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 199811,
+          "compressedSha256": "0a6fb14903fb5c5c2e55a573b908a8b62169b8754e469c4a1071dab7b1dde0a3",
+          "file": "events.json.gz",
+          "originalSha256": "b972c9fda4e3e1cc4576d2a043ed8e20a1cf02d527bdb4f8462a06cb212db644",
+          "sha256": "b972c9fda4e3e1cc4576d2a043ed8e20a1cf02d527bdb4f8462a06cb212db644"
+        },
+        "gc.log": {
+          "bytes": 11229,
+          "compressedSha256": "8ebad0461db629965ac5400aaa49ae0d11acc56d5adbb76a2eae32153b1f365b",
+          "file": "gc.log.gz",
+          "originalSha256": "722e18849b54f8aab67d048d4a980356ba727491ec080cbc1ca72af50f633194",
+          "sha256": "722e18849b54f8aab67d048d4a980356ba727491ec080cbc1ca72af50f633194"
+        },
+        "heap.hprof": {
+          "bytes": 7759411,
+          "compressedSha256": "5b9c44eafafc8a4897fb451e6b9fa5a4dfa86dbc242a5710f1f2566f54793f95",
+          "file": "heap.hprof.gz",
+          "originalSha256": "9873badb7cb63ad87018805c594fe43836202dbe7c832f0e412694ccfe4159e8",
+          "sha256": "232f6043a2c04b6d7bb1f74f7072e987d79067f24bcbc780f3301dbcd05396e2"
+        },
+        "nmt.txt": {
+          "bytes": 4731,
+          "compressedSha256": "75500950811d8eadbc53f4ab7f25b6defd6224f8efb1d764ee8320a509c3437f",
+          "file": "nmt.txt.gz",
+          "originalSha256": "44fef6ed2caa2b20489926def15c0c9dcf6975ba894139685eb62a296ab290e1",
+          "sha256": "44fef6ed2caa2b20489926def15c0c9dcf6975ba894139685eb62a296ab290e1"
+        },
+        "recording.jfr": {
+          "bytes": 397995,
+          "compressedSha256": "d3ace5318512cae9430422229a5de62feb2b8a334c36d3758a11be8f74349b6a",
+          "file": "recording.jfr.gz",
+          "originalSha256": "eb5c4b01600c4cddaa5a13b405fbe1e1382145b6aafabebd180f3f69fdb2d58f",
+          "sha256": "d49cd55cb0fc8273ec139e32f6300d401a5aa904f360bbc41897bf5c1db86bd9"
+        },
+        "summary.txt": {
+          "bytes": 12156,
+          "compressedSha256": "46a4a2f50ac6477e058826256432ea392877f7dfc652b1caeea617aeff2e7064",
+          "file": "summary.txt.gz",
+          "originalSha256": "9f69f2971c853e3806fe79b356c024aae0dcfccb2a51b5aef85af4a519cfa707",
+          "sha256": "9f69f2971c853e3806fe79b356c024aae0dcfccb2a51b5aef85af4a519cfa707"
+        },
+        "threads.txt": {
+          "bytes": 8700,
+          "compressedSha256": "eb1fd2d08eff29f00833154d9403b59f5b2a5dedbaf856133f9285ef5f8f5b01",
+          "file": "threads.txt.gz",
+          "originalSha256": "5ce699ec0658f027c6953375fddd2d2aa3df8b9095e28d4986e887498870153e",
+          "sha256": "5ce699ec0658f027c6953375fddd2d2aa3df8b9095e28d4986e887498870153e"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 2.99,
+          "pauseCount": 9,
+          "totalPauseMs": 12.944
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 3109433,
+          "recordKinds": {
+            "instances": 47618,
+            "objectArrays": 6916,
+            "primitiveArrays": 17161
+          },
+          "records": 71695,
+          "rootTags": {
+            "1": 96,
+            "2": 1,
+            "3": 72,
+            "5": 1716,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 31087080
+          },
+          "counts": {
+            "jdk.GCPhasePause": 8,
+            "jdk.GarbageCollection": 8,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 3.015583,
+          "maxPauseMs": 3.015583,
+          "tlabReservedBytes": 0,
+          "total": 76
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 5,
+            "RUNNABLE": 10,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 20
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseParallelGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "parallel",
+      "id": "oracle25-parallel",
+      "javaVersionOutput": "java version \"25.0.3\" 2026-04-21 LTS\nJava(TM) SE Runtime Environment (build 25.0.3+9-LTS-195)\nJava HotSpot(TM) 64-Bit Server VM (build 25.0.3+9-LTS-195, mixed mode, sharing)\n",
+      "jdk": "25.0.3+9-LTS-195",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Oracle Corporation"
+    },
+    {
+      "actualCollectors": [
+        "Copy",
+        "MarkSweepCompact"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 196197,
+          "compressedSha256": "51333648b35919c979e88ea69d4c827ea5c50285f1c3b13547172fc000acce42",
+          "file": "events.json.gz",
+          "originalSha256": "dfc8283c672f31c15ef4ec0f0b48cdfd9cac0b17af4bc3253dbbd9a7c1ac08c5",
+          "sha256": "dfc8283c672f31c15ef4ec0f0b48cdfd9cac0b17af4bc3253dbbd9a7c1ac08c5"
+        },
+        "gc.log": {
+          "bytes": 12284,
+          "compressedSha256": "f2b16e9d399868f6e5a73c0274691e35570eeb81b376038b2633059520ed070e",
+          "file": "gc.log.gz",
+          "originalSha256": "e710ca9898de4e485ba3d983cc6edecf152078432cb44c471d67f3f933701f16",
+          "sha256": "e710ca9898de4e485ba3d983cc6edecf152078432cb44c471d67f3f933701f16"
+        },
+        "heap.hprof": {
+          "bytes": 7761443,
+          "compressedSha256": "197f8a1830ce2c7affa4f273315b57abb40878ed68c7ce97e5dd8814c3c43324",
+          "file": "heap.hprof.gz",
+          "originalSha256": "6684ce2a8c58dcb5483acc439957934bd9e6104fb206807759c9a0adb495f072",
+          "sha256": "c175494a349d8d60726ebfddf3e3e59a71ff4d1acde143e28259c47714656e41"
+        },
+        "nmt.txt": {
+          "bytes": 4667,
+          "compressedSha256": "abbdae0cf58477b38583aadab7010d6a6dd4bfa7b974b0705b071084ed94c479",
+          "file": "nmt.txt.gz",
+          "originalSha256": "eea742a910b62940a25513c39aa0c64468d5ba7e422a5a3b118d117aaa5ae0c4",
+          "sha256": "eea742a910b62940a25513c39aa0c64468d5ba7e422a5a3b118d117aaa5ae0c4"
+        },
+        "recording.jfr": {
+          "bytes": 394427,
+          "compressedSha256": "c3b0c7bbe4a2f3c53c640c9d3a99031fa6a972ceaa3c84bd2a4430540b79f6ad",
+          "file": "recording.jfr.gz",
+          "originalSha256": "de134f05dbdb42727109b2e1504b2e5c100df87120dee253aace93c79556acef",
+          "sha256": "17d74b14bf79c4e7329f870af141c2944b505361448abf9828e2e2a945fcc739"
+        },
+        "summary.txt": {
+          "bytes": 12156,
+          "compressedSha256": "876448c3369f05a0be0a376c67d8f8fa907871cd73ec8db4dcc9c2cbc8855bd7",
+          "file": "summary.txt.gz",
+          "originalSha256": "a4236ee416c755c5ba0e03028a09513e5c4888ca6688a9f9ef93493c69e09a0f",
+          "sha256": "a4236ee416c755c5ba0e03028a09513e5c4888ca6688a9f9ef93493c69e09a0f"
+        },
+        "threads.txt": {
+          "bytes": 8509,
+          "compressedSha256": "a2bdf552f14282fd7981a72beae394c8b8f8af79de8c8a8e6608233ffb505c22",
+          "file": "threads.txt.gz",
+          "originalSha256": "60215e8e3af793725f6c1beb52c686236372ab76150a3a3c854cea7eb34c2e51",
+          "sha256": "60215e8e3af793725f6c1beb52c686236372ab76150a3a3c854cea7eb34c2e51"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 3.052,
+          "pauseCount": 12,
+          "totalPauseMs": 16.26
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 3108890,
+          "recordKinds": {
+            "instances": 47639,
+            "objectArrays": 6916,
+            "primitiveArrays": 17272
+          },
+          "records": 71827,
+          "rootTags": {
+            "1": 96,
+            "2": 1,
+            "3": 72,
+            "5": 1716,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 32461744
+          },
+          "counts": {
+            "jdk.ExecutionSample": 1,
+            "jdk.GCPhasePause": 11,
+            "jdk.GarbageCollection": 11,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 3.0282500000000003,
+          "maxPauseMs": 3.0282500000000003,
+          "tlabReservedBytes": 0,
+          "total": 83
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 3,
+            "RUNNABLE": 10,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 18
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "serial",
+      "id": "oracle25-serial",
+      "javaVersionOutput": "java version \"25.0.3\" 2026-04-21 LTS\nJava(TM) SE Runtime Environment (build 25.0.3+9-LTS-195)\nJava HotSpot(TM) 64-Bit Server VM (build 25.0.3+9-LTS-195, mixed mode, sharing)\n",
+      "jdk": "25.0.3+9-LTS-195",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Oracle Corporation"
+    },
+    {
+      "actualCollectors": [
+        "ZGC Minor Cycles",
+        "ZGC Minor Pauses",
+        "ZGC Major Cycles",
+        "ZGC Major Pauses"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 381585,
+          "compressedSha256": "4e1a01ed381b9ab20269092faa3bc7fe8058f4b955f745ecaf414bc88da02c45",
+          "file": "events.json.gz",
+          "originalSha256": "584592727446f8ad05a3e36c8ec0cfe1cf10297184c91231826c59ec537ef5af",
+          "sha256": "584592727446f8ad05a3e36c8ec0cfe1cf10297184c91231826c59ec537ef5af"
+        },
+        "gc.log": {
+          "bytes": 107940,
+          "compressedSha256": "50fe1f6ae1d0ca2ebfe3074814296e38e4b557b83651a62da731a76a929570d4",
+          "file": "gc.log.gz",
+          "originalSha256": "8ad447a3d1a0d11dbfdd84fb5ae55461e8142c39fa3e0fb8eb73508f6a60a320",
+          "sha256": "8ad447a3d1a0d11dbfdd84fb5ae55461e8142c39fa3e0fb8eb73508f6a60a320"
+        },
+        "heap.hprof": {
+          "bytes": 7076785,
+          "compressedSha256": "60409a61aa86273b189695a6d85f576682510dff70b67d7db05abc0d77bf6f34",
+          "file": "heap.hprof.gz",
+          "originalSha256": "77c700864e0ef0a6529607ba95c25baed801a90892cc1b4c3138ba700b441d42",
+          "sha256": "677b4c0ed71ede35f1e8e1561f47c44c14db2ce23c0afc94854ec18ceba8413b"
+        },
+        "nmt.txt": {
+          "bytes": 4679,
+          "compressedSha256": "f9c617d36a49b8de35ff864fef01b607006253e5c9b70fedc153179f60c4b345",
+          "file": "nmt.txt.gz",
+          "originalSha256": "6b0805106f360868680f3defab8b7814c3008bb18980acfc7126fa0a6ae15350",
+          "sha256": "6b0805106f360868680f3defab8b7814c3008bb18980acfc7126fa0a6ae15350"
+        },
+        "recording.jfr": {
+          "bytes": 421777,
+          "compressedSha256": "65488ab4bd2c80f24713abbf4b0ca4bfbea0027f9d78900f53e448bc88eb834b",
+          "file": "recording.jfr.gz",
+          "originalSha256": "50d274df3b5ca82a0e239148d5b76a0e167ee853ef708e29fd41a14169f75586",
+          "sha256": "f62b6f5314f7c1955ca4794ca0b8c39eb8a96c07308afc028d223efa53da4a17"
+        },
+        "summary.txt": {
+          "bytes": 12156,
+          "compressedSha256": "081a4a6f0448030aacf21ddd9c4193aca812c2a2ba04a3a1c4f8a599adff2c9b",
+          "file": "summary.txt.gz",
+          "originalSha256": "171e1c5451f7485c2c77ed3514ff8a3e1943e8fca899c88fd3543a9b09f46a32",
+          "sha256": "171e1c5451f7485c2c77ed3514ff8a3e1943e8fca899c88fd3543a9b09f46a32"
+        },
+        "threads.txt": {
+          "bytes": 9281,
+          "compressedSha256": "12623515918402ec1d3e73816f11965cd96f541bc42807fe644525d42d98c890",
+          "file": "threads.txt.gz",
+          "originalSha256": "24f004f4c4440a6a38f925380b84d5cbc3bef7428c3524afe6378c11ec97eaa7",
+          "sha256": "24f004f4c4440a6a38f925380b84d5cbc3bef7428c3524afe6378c11ec97eaa7"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 0.004,
+          "pauseCount": 55,
+          "totalPauseMs": 0.082
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 2697776,
+          "recordKinds": {
+            "instances": 41471,
+            "objectArrays": 6703,
+            "primitiveArrays": 10928
+          },
+          "records": 59102,
+          "rootTags": {
+            "1": 97,
+            "2": 1,
+            "3": 72,
+            "5": 1721,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 23202408
+          },
+          "counts": {
+            "jdk.ExecutionSample": 2,
+            "jdk.GCPhasePause": 42,
+            "jdk.GarbageCollection": 6,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 7.6242920000000005,
+          "maxPauseMs": 0.003208,
+          "tlabReservedBytes": 0,
+          "total": 110
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 11,
+            "RUNNABLE": 10,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 26
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseZGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "zgc",
+      "id": "oracle25-zgc",
+      "javaVersionOutput": "java version \"25.0.3\" 2026-04-21 LTS\nJava(TM) SE Runtime Environment (build 25.0.3+9-LTS-195)\nJava HotSpot(TM) 64-Bit Server VM (build 25.0.3+9-LTS-195, mixed mode, sharing)\n",
+      "jdk": "25.0.3+9-LTS-195",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Oracle Corporation"
+    },
+    {
+      "actualCollectors": [
+        "G1 Young Generation",
+        "G1 Concurrent GC",
+        "G1 Old Generation"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 260944,
+          "compressedSha256": "89419190063c35f8f63ac2010a1799931dd7c219e29a837bad343c761191f111",
+          "file": "events.json.gz",
+          "originalSha256": "ae8b4f96cf313663ae793490783b86b3c038b1ec1aa41cbc5797d0dfa2a86262",
+          "sha256": "ae8b4f96cf313663ae793490783b86b3c038b1ec1aa41cbc5797d0dfa2a86262"
+        },
+        "gc.log": {
+          "bytes": 11079,
+          "compressedSha256": "38554e1fdb02dac4c5cf0747bef58f0e2e4a787bf489df003f6d5cb95f131882",
+          "file": "gc.log.gz",
+          "originalSha256": "667f8f6368474f80c8dcb2458e5cc5d918789361812ee74c380535da1f28564e",
+          "sha256": "667f8f6368474f80c8dcb2458e5cc5d918789361812ee74c380535da1f28564e"
+        },
+        "heap.hprof": {
+          "bytes": 8230431,
+          "compressedSha256": "b6eb463735f5d459a0cfe958a63ad767af0a1e1272dea912ae0004f7325e8e6f",
+          "file": "heap.hprof.gz",
+          "originalSha256": "678d41c3d335fd62d456f078c90903b02e301e6f04f25fa550772b90a3ff2bb8",
+          "sha256": "830282b8bc0905dfad31eccdfe51d85d883dfa3f537da599c14aba36afb331e3"
+        },
+        "nmt.txt": {
+          "bytes": 5072,
+          "compressedSha256": "d29e9b1908cc05c6d66a4b0647daa50282aee6002508730d536c49af0e12e28d",
+          "file": "nmt.txt.gz",
+          "originalSha256": "61af1848c0a16f70ca50cd75036976f1c953a29a96bf6917bbe4e51c9bc52ac7",
+          "sha256": "61af1848c0a16f70ca50cd75036976f1c953a29a96bf6917bbe4e51c9bc52ac7"
+        },
+        "recording.jfr": {
+          "bytes": 421988,
+          "compressedSha256": "9e4edf849dc07df3be6e128224ffd33fbebf2c9b12c2284bbcb7b3c4b8936c50",
+          "file": "recording.jfr.gz",
+          "originalSha256": "203fb53946523e5d16baff22011a720303810bbc3e5e4cb1cbc4b3995ef0f69e",
+          "sha256": "05c04cc120b12367fd1bb32c7b180c4ae5f90143e71ab193b64cbc0be592975b"
+        },
+        "summary.txt": {
+          "bytes": 12156,
+          "compressedSha256": "5f6ed2cbc236c6be56314ee65b0f426b7a7bbd34bf8b7f007864061517090ef1",
+          "file": "summary.txt.gz",
+          "originalSha256": "6b63fa4ad3c74b75a1c39ba23a5a6e8f22c55d13cbe3c8e15345bcea0d1b73da",
+          "sha256": "6b63fa4ad3c74b75a1c39ba23a5a6e8f22c55d13cbe3c8e15345bcea0d1b73da"
+        },
+        "threads.txt": {
+          "bytes": 9101,
+          "compressedSha256": "ded2aada3bd82ceb7f02f2af1dfd494b1d54b5536d3f7378ed4561bf4ab89414",
+          "file": "threads.txt.gz",
+          "originalSha256": "181dac20c5f3deb76f0b06c28712a565341bd176361d97e750e95755443c7980",
+          "sha256": "181dac20c5f3deb76f0b06c28712a565341bd176361d97e750e95755443c7980"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 2.75,
+          "pauseCount": 7,
+          "totalPauseMs": 13.989
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 3374825,
+          "recordKinds": {
+            "instances": 52518,
+            "objectArrays": 7449,
+            "primitiveArrays": 17720
+          },
+          "records": 77687,
+          "rootTags": {
+            "1": 309,
+            "2": 1,
+            "3": 72,
+            "5": 1735,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 25540600
+          },
+          "counts": {
+            "jdk.ExecutionSample": 2,
+            "jdk.GCPhasePause": 6,
+            "jdk.GarbageCollection": 6,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 2.7309579999999998,
+          "maxPauseMs": 2.7309579999999998,
+          "tlabReservedBytes": 0,
+          "total": 74
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 9,
+            "RUNNABLE": 10,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 24
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseG1GC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "g1",
+      "id": "graal25-g1",
+      "javaVersionOutput": "java version \"25.0.3\" 2026-04-21 LTS\nJava(TM) SE Runtime Environment Oracle GraalVM 25.0.3+9.1 (build 25.0.3+9-LTS-jvmci-b01)\nJava HotSpot(TM) 64-Bit Server VM Oracle GraalVM 25.0.3+9.1 (build 25.0.3+9-LTS-jvmci-b01, mixed mode, sharing)\n",
+      "jdk": "25.0.3+9-LTS-jvmci-b01",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Oracle Corporation"
+    },
+    {
+      "actualCollectors": [
+        "PS MarkSweep",
+        "PS Scavenge"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 215348,
+          "compressedSha256": "b99aaeb94ba647e1bedf48770f1821fda61a9f0089a85c7690fd1bacee348e11",
+          "file": "events.json.gz",
+          "originalSha256": "4a4ecc0bb6b7290de7a028b23e1306987437018bbeeaebfc847a5a74ada18404",
+          "sha256": "4a4ecc0bb6b7290de7a028b23e1306987437018bbeeaebfc847a5a74ada18404"
+        },
+        "gc.log": {
+          "bytes": 11235,
+          "compressedSha256": "7cdfc75df5788a3c8cf639151292460dd247716bc15d309b1e434de84677df9e",
+          "file": "gc.log.gz",
+          "originalSha256": "92f18785fa05322cb3f15459c07fadc01b4ec7a081ea8225f2cef44df478ae1f",
+          "sha256": "92f18785fa05322cb3f15459c07fadc01b4ec7a081ea8225f2cef44df478ae1f"
+        },
+        "heap.hprof": {
+          "bytes": 8234040,
+          "compressedSha256": "09cea3bda4ce52a47d454999bff3876d5ddaaa8a18e43cbb2b53ac1bc009d750",
+          "file": "heap.hprof.gz",
+          "originalSha256": "1f65ab186948d563ac04957d4b24a3d6eff210070067a2f07a4203d3c95c71fe",
+          "sha256": "8d8011cdc15a9206db620b2a192b40c4471d95a56a2bbd65780fce9fa513f136"
+        },
+        "nmt.txt": {
+          "bytes": 4919,
+          "compressedSha256": "fa71c9a0cebd97486939b92b49621e8e6c53d4fc00e081c3af1b48a2ac2b6b02",
+          "file": "nmt.txt.gz",
+          "originalSha256": "27e9d66f6175561ef672fe6b5bd751514948d66a0b96677385611d96728205c7",
+          "sha256": "27e9d66f6175561ef672fe6b5bd751514948d66a0b96677385611d96728205c7"
+        },
+        "recording.jfr": {
+          "bytes": 414689,
+          "compressedSha256": "d67d22bf152bbd39613405e4f98c688f17c794451d76dd6800b17e93d910d92d",
+          "file": "recording.jfr.gz",
+          "originalSha256": "cf227ba1800fa7191ee1a0b28c4a5159f3979a21cf272a939510f1fd61540c64",
+          "sha256": "a9a4c9fc65c88ab3f4936bcfc08b2f33fcd19f1e0827c0383d6c350399812dba"
+        },
+        "summary.txt": {
+          "bytes": 12156,
+          "compressedSha256": "6fcea2e3fe35de9af4b7c48bde25647f0c3f4a1d0cf8edf28e8b10f4e2fa8ba9",
+          "file": "summary.txt.gz",
+          "originalSha256": "c5ae3f9c9d5f035160b2f5e2a0248211e66e16f24c346f176521d0a3fcbc03d8",
+          "sha256": "c5ae3f9c9d5f035160b2f5e2a0248211e66e16f24c346f176521d0a3fcbc03d8"
+        },
+        "threads.txt": {
+          "bytes": 8719,
+          "compressedSha256": "22a6850ee4a3ed62b3ba972217f9703302968b10fb4be55481b3ec0316b710da",
+          "file": "threads.txt.gz",
+          "originalSha256": "f5e5515665ba9ed6a609044102449ca6d748f9f6412e7fcf73dfe985b5ccbdfa",
+          "sha256": "f5e5515665ba9ed6a609044102449ca6d748f9f6412e7fcf73dfe985b5ccbdfa"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 3.103,
+          "pauseCount": 9,
+          "totalPauseMs": 14.694
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 3370985,
+          "recordKinds": {
+            "instances": 52520,
+            "objectArrays": 7449,
+            "primitiveArrays": 18207
+          },
+          "records": 78176,
+          "rootTags": {
+            "1": 234,
+            "2": 1,
+            "3": 72,
+            "5": 1735,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 32158240
+          },
+          "counts": {
+            "jdk.ExecutionSample": 2,
+            "jdk.GCPhasePause": 8,
+            "jdk.GarbageCollection": 8,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 3.125334,
+          "maxPauseMs": 3.125334,
+          "tlabReservedBytes": 0,
+          "total": 78
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 5,
+            "RUNNABLE": 10,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 20
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseParallelGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "parallel",
+      "id": "graal25-parallel",
+      "javaVersionOutput": "java version \"25.0.3\" 2026-04-21 LTS\nJava(TM) SE Runtime Environment Oracle GraalVM 25.0.3+9.1 (build 25.0.3+9-LTS-jvmci-b01)\nJava HotSpot(TM) 64-Bit Server VM Oracle GraalVM 25.0.3+9.1 (build 25.0.3+9-LTS-jvmci-b01, mixed mode, sharing)\n",
+      "jdk": "25.0.3+9-LTS-jvmci-b01",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Oracle Corporation"
+    },
+    {
+      "actualCollectors": [
+        "Copy",
+        "MarkSweepCompact"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 205944,
+          "compressedSha256": "3b6ad052b8f52e10f1cfd0181abcf2c6e00350f92b713eb633443fcacced1f0a",
+          "file": "events.json.gz",
+          "originalSha256": "9d3790213d86e626a83d3df488774d63b32f3425171314892e40c7bfa1778a3e",
+          "sha256": "9d3790213d86e626a83d3df488774d63b32f3425171314892e40c7bfa1778a3e"
+        },
+        "gc.log": {
+          "bytes": 12850,
+          "compressedSha256": "e9653a5b662305efbf6ace220057269645da7783d2ae8a1c2b94f25fc2410e15",
+          "file": "gc.log.gz",
+          "originalSha256": "26050519096495c44bfd27f7859c539b465325eb3f18e586530fad71a789313f",
+          "sha256": "26050519096495c44bfd27f7859c539b465325eb3f18e586530fad71a789313f"
+        },
+        "heap.hprof": {
+          "bytes": 8235452,
+          "compressedSha256": "d06a4cfa6325a1d68d84c6d3fb94a074a999913868eba9f5dfcce6f0e787710c",
+          "file": "heap.hprof.gz",
+          "originalSha256": "158d1dc2ffe6345fe73cfd60a6fc0fa3039a5c424da9e6be63279b7d9d322625",
+          "sha256": "8229fdf858bd2b18dae0c927b6a4e30c7bbb5b128b478006db38f3c32aa32a56"
+        },
+        "nmt.txt": {
+          "bytes": 4851,
+          "compressedSha256": "1a2cc44e37fb38c89c38b3b141f32ae99b071d03c8e0920cf1a5d3046a055b8f",
+          "file": "nmt.txt.gz",
+          "originalSha256": "ca671e2c85a24c13f48e6a193d5023cb50685e40057ccc6f357a352c7da41fdf",
+          "sha256": "ca671e2c85a24c13f48e6a193d5023cb50685e40057ccc6f357a352c7da41fdf"
+        },
+        "recording.jfr": {
+          "bytes": 410601,
+          "compressedSha256": "20e2e1df202c6d8e431b92348e23e0f7b6309785fc4246ec582413032c172bed",
+          "file": "recording.jfr.gz",
+          "originalSha256": "0b96b3f0ca5984068206b826a8c4e9823110931ba802cd00df65c75f1ef46355",
+          "sha256": "dc96e9eca5ebba9985a4760c5c02b1637932edb60a8309bd92aee678541f1a08"
+        },
+        "summary.txt": {
+          "bytes": 12156,
+          "compressedSha256": "e8ce5814f7de07cd0f922776b4738961613190f10d81d51f214249c0111cc818",
+          "file": "summary.txt.gz",
+          "originalSha256": "4c3ebd1a29ad459f36e6452db927b369f9e4a8b361954238e7db61f87f788a9d",
+          "sha256": "4c3ebd1a29ad459f36e6452db927b369f9e4a8b361954238e7db61f87f788a9d"
+        },
+        "threads.txt": {
+          "bytes": 8526,
+          "compressedSha256": "118167b541c191cc1f4cae05a42f979e4a76c2263b90ecc0c1ded459f08090af",
+          "file": "threads.txt.gz",
+          "originalSha256": "f822a8ad5048383a7ff149827efcac01c3d78f88d5c0ab2ead54e9a4de567ffa",
+          "sha256": "f822a8ad5048383a7ff149827efcac01c3d78f88d5c0ab2ead54e9a4de567ffa"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 2.956,
+          "pauseCount": 13,
+          "totalPauseMs": 17.854
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 3374293,
+          "recordKinds": {
+            "instances": 52522,
+            "objectArrays": 7449,
+            "primitiveArrays": 18005
+          },
+          "records": 77976,
+          "rootTags": {
+            "1": 328,
+            "2": 1,
+            "3": 72,
+            "5": 1735,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 33299576
+          },
+          "counts": {
+            "jdk.ExecutionSample": 1,
+            "jdk.GCPhasePause": 12,
+            "jdk.GarbageCollection": 12,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 2.9165419999999997,
+          "maxPauseMs": 2.9165419999999997,
+          "tlabReservedBytes": 0,
+          "total": 85
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 3,
+            "RUNNABLE": 10,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 18
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseSerialGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "serial",
+      "id": "graal25-serial",
+      "javaVersionOutput": "java version \"25.0.3\" 2026-04-21 LTS\nJava(TM) SE Runtime Environment Oracle GraalVM 25.0.3+9.1 (build 25.0.3+9-LTS-jvmci-b01)\nJava HotSpot(TM) 64-Bit Server VM Oracle GraalVM 25.0.3+9.1 (build 25.0.3+9-LTS-jvmci-b01, mixed mode, sharing)\n",
+      "jdk": "25.0.3+9-LTS-jvmci-b01",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Oracle Corporation"
+    },
+    {
+      "actualCollectors": [
+        "ZGC Minor Cycles",
+        "ZGC Minor Pauses",
+        "ZGC Major Cycles",
+        "ZGC Major Pauses"
+      ],
+      "artifacts": {
+        "events.json": {
+          "bytes": 369521,
+          "compressedSha256": "6979f25161ec330b8d408f61a22a6fa41b61f8cb7caea171609ea66ed819f478",
+          "file": "events.json.gz",
+          "originalSha256": "4bb476b0dc0cab80589d9389a14875040156185182712b2514347eeda5abb617",
+          "sha256": "4bb476b0dc0cab80589d9389a14875040156185182712b2514347eeda5abb617"
+        },
+        "gc.log": {
+          "bytes": 107862,
+          "compressedSha256": "1ec37121d4737322b267fbd98fd0e32f109fee8045a409978d36b5a93931350f",
+          "file": "gc.log.gz",
+          "originalSha256": "e5f650aee7cf8751ab1285c0cfc47b666e500dcfd6008da7b41c0eb052471675",
+          "sha256": "e5f650aee7cf8751ab1285c0cfc47b666e500dcfd6008da7b41c0eb052471675"
+        },
+        "heap.hprof": {
+          "bytes": 7040243,
+          "compressedSha256": "529f59a5849d21c33898bcb7136dc38bf2b656454a2b388c4867882b1f0a46df",
+          "file": "heap.hprof.gz",
+          "originalSha256": "451142f4452392082e4cfab5e04b33c1f6bf8330f4082a2487f738378df054a2",
+          "sha256": "6f8b41f2a274e8dbcdfa73f2db555033747781d7d11482d3d4ae36bb800b3fbb"
+        },
+        "nmt.txt": {
+          "bytes": 4720,
+          "compressedSha256": "bfbdc3fc83753c724f11f5d0b2353171839f972ac7b3fdd9a1fac7b706b6d69f",
+          "file": "nmt.txt.gz",
+          "originalSha256": "32fb27ded3fd938e612c60230ab13c54ae24cfc2f48733be4c6d01be37473bb4",
+          "sha256": "32fb27ded3fd938e612c60230ab13c54ae24cfc2f48733be4c6d01be37473bb4"
+        },
+        "recording.jfr": {
+          "bytes": 436787,
+          "compressedSha256": "c1e681c21d12d304606586de2e5a26b8376485c00f7a98f12b0042c580de2272",
+          "file": "recording.jfr.gz",
+          "originalSha256": "c5411a862ead8d89f250e7a66e12f94db0a481ee3629935ccd2ed6a6c9d2b37f",
+          "sha256": "e49e7fb77f50e3c08dd626fe0edf123272862644b45fc97b64efc9567caded89"
+        },
+        "summary.txt": {
+          "bytes": 12156,
+          "compressedSha256": "de646e561bbe99b57d2e0ed7708dc3a18d50641075f0eea46fba9da1817bc6d9",
+          "file": "summary.txt.gz",
+          "originalSha256": "17cb9318a59efd826da747248671904c8890d44ece13f82332e1ba2c4615119d",
+          "sha256": "17cb9318a59efd826da747248671904c8890d44ece13f82332e1ba2c4615119d"
+        },
+        "threads.txt": {
+          "bytes": 9287,
+          "compressedSha256": "e5c334c04cdf97cae324f698901f0d3e46847930aa93faedc6cfee89e165583b",
+          "file": "threads.txt.gz",
+          "originalSha256": "b88027597bc098c07ba09d623e2d114fe2d58101122447fe730302197c5ec198",
+          "sha256": "b88027597bc098c07ba09d623e2d114fe2d58101122447fe730302197c5ec198"
+        }
+      },
+      "expected": {
+        "gc": {
+          "maxPauseMs": 0.004,
+          "pauseCount": 55,
+          "totalPauseMs": 0.098
+        },
+        "heap": {
+          "identifierBytes": 8,
+          "markerArrays": 11,
+          "payloadBytes": 2879087,
+          "recordKinds": {
+            "instances": 44856,
+            "objectArrays": 7040,
+            "primitiveArrays": 11674
+          },
+          "records": 63570,
+          "rootTags": {
+            "1": 255,
+            "2": 1,
+            "3": 72,
+            "5": 1732,
+            "8": 10
+          }
+        },
+        "jfr": {
+          "allocationBytesByEvent": {
+            "jdk.ObjectAllocationSample": 24707360
+          },
+          "counts": {
+            "jdk.ExecutionSample": 1,
+            "jdk.GCPhasePause": 42,
+            "jdk.GarbageCollection": 6,
+            "jdk.ObjectAllocationSample": 60
+          },
+          "maxCycleMs": 8.479041,
+          "maxPauseMs": 0.0035,
+          "tlabReservedBytes": 0,
+          "total": 109
+        },
+        "threads": {
+          "blockedName": "fixture-blocked",
+          "states": {
+            "BLOCKED": 1,
+            "JVM_INTERNAL": 11,
+            "RUNNABLE": 10,
+            "TIMED_WAITING": 2,
+            "WAITING": 2
+          },
+          "total": 26
+        }
+      },
+      "flags": [
+        "-Xms64m",
+        "-Xmx128m",
+        "-XX:ActiveProcessorCount=2",
+        "-XX:NativeMemoryTracking=summary",
+        "-XX:+UseZGC",
+        "-Xlog:gc*:file=<capture-dir>/gc.log:uptime,level,tags",
+        "-Duser.name=fixture",
+        "-Duser.home=/fixture",
+        "-Djava.io.tmpdir=<capture-dir>"
+      ],
+      "gc": "zgc",
+      "id": "graal25-zgc",
+      "javaVersionOutput": "java version \"25.0.3\" 2026-04-21 LTS\nJava(TM) SE Runtime Environment Oracle GraalVM 25.0.3+9.1 (build 25.0.3+9-LTS-jvmci-b01)\nJava HotSpot(TM) 64-Bit Server VM Oracle GraalVM 25.0.3+9.1 (build 25.0.3+9-LTS-jvmci-b01, mixed mode, sharing)\n",
+      "jdk": "25.0.3+9-LTS-jvmci-b01",
+      "platform": "Mac OS X/aarch64",
+      "source": "fresh synthetic JVM; JDK jcmd/jfr outputs; byte-width-preserving operator identity redaction",
+      "vendor": "Oracle Corporation"
+    }
+  ],
+  "events": "jdk.ExecutionSample,jdk.NativeMethodSample,jdk.ObjectAllocationInNewTLAB,jdk.ObjectAllocationOutsideTLAB,jdk.ObjectAllocationSample,jdk.JavaMonitorEnter,jdk.VirtualThreadPinned,jdk.GarbageCollection,jdk.GCPhasePause,jdk.SocketRead,jdk.FileRead",
+  "generatorSha256": "611e870fb7b3d766b302bb669c5d117d80e4002502b4ce0791b7865c275b7ea8",
+  "normalization": "Source recordings are immutable captures, not reproducible executions. Capture timestamps, IDs and sampling differ on recapture. Only operator identity is redacted with equal-width bytes. Gzip mtime=0. Expected values come from independent Python extraction, not the Go analyzers.",
+  "schemaVersion": 1,
+  "workloadSha256": "5e14ccf65df15b4874ff805907570db56b2949bcd1db7d165356069a3377716d"
+}

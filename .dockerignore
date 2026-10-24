@@ -1,0 +1,13 @@
+.git
+jvmdiag
+tests/corpus
+**/*.hprof
+**/*.jfr
+**/*.log
+.env
+.env.*
+**/__pycache__
+**/*.pyc
+**/node_modules
+*.env
+*.env.*

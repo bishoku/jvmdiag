@@ -1,0 +1,20 @@
+/jvmdiag
+/jvmdiag.exe
+/dist/
+/coverage*
+.env
+.env.*
+!.env.example
+*.hprof
+*.jfr
+*.log
+*.tmp
+__pycache__/
+*.pyc
+node_modules/
+.jvmdiag/
+# Intentionally keep normalized, compressed JVM reference captures tracked.
+
+*.env
+*.env.*
+!.env.example

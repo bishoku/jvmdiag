@@ -1,0 +1,204 @@
+name: Verification
+on:
+  workflow_call:
+    inputs:
+      release-tag:
+        type: string
+        default: ''
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  policy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: .go-version
+          cache: false
+      - name: Format, packaging policies and workflow syntax
+        run: |
+          test -z "$(gofmt -l cmd internal)"
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 -color -shellcheck=
+          go vet ./...
+  go:
+    name: Go / ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-24.04, target: linux_amd64}
+          - {runner: ubuntu-24.04-arm, target: linux_arm64}
+          - {runner: macos-15-intel, target: darwin_amd64}
+          - {runner: macos-15, target: darwin_arm64}
+          - {runner: windows-2025, target: windows_amd64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      TARGET: ${{ matrix.target }}
+      RELEASE_TAG: ${{ inputs.release-tag || 'v0.0.0-ci' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: .go-version
+          cache: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Deterministic regressions and race detection
+        run: go test -race -shuffle=on -count=3 -cpu=1,4 -timeout=180s ./...
+      - name: Package and run the actual native release archive
+        run: |
+          python - <<'PYCODE'
+          import datetime,os,subprocess,sys
+          sys.path.insert(0,'scripts')
+          import release
+          commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          epoch=int(subprocess.check_output(['git','show','-s','--format=%ct','HEAD'],text=True))
+          date=datetime.datetime.fromtimestamp(epoch,datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          archive=release.build(os.environ['RELEASE_TAG'],os.environ['TARGET'],'dist',commit,date)
+          release.smoke(archive)
+          PYCODE
+      - name: Preserve tested release bytes
+        if: inputs.release-tag != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: binary-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+      - run: npm ci --prefix tests --ignore-scripts
+      - run: npx --prefix tests playwright install --with-deps chromium
+      - run: node tests/ui-security.cjs
+  jvm:
+    name: Live JVM / Temurin ${{ matrix.java }}
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['17', '21', '25']
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: .go-version
+          cache: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Fresh JVM captures across G1, Parallel, Serial and ZGC
+        env:
+          LABEL: temurin${{ matrix.java }}
+        run: |
+          export JVMDIAG_TEST_JDKS="$(python3 -c 'import json,os;print(json.dumps({os.environ["LABEL"]:os.environ["JAVA_HOME"]}))')"
+          JVMDIAG_GENERATE_MATRIX=1 go test -v -run '^TestLiveJDKGCMatrix$' -timeout=300s ./internal/analyzer
+  containers:
+    name: Image / ${{ matrix.variant }} / ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-24.04, arch: amd64, variant: server, file: Dockerfile, kind: server, jdk: ''}
+          - {runner: ubuntu-24.04-arm, arch: arm64, variant: server, file: Dockerfile, kind: server, jdk: ''}
+          - {runner: ubuntu-24.04, arch: amd64, variant: diagnostic17, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:17-jdk-jammy}
+          - {runner: ubuntu-24.04-arm, arch: arm64, variant: diagnostic17, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:17-jdk-jammy}
+          - {runner: ubuntu-24.04, arch: amd64, variant: diagnostic25, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:25-jdk-jammy}
+          - {runner: ubuntu-24.04-arm, arch: arm64, variant: diagnostic25, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:25-jdk-jammy}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          version: v0.38.1
+      - name: Build local candidate, without publishing
+        env:
+          DOCKERFILE: ${{ matrix.file }}
+          JDK_IMAGE: ${{ matrix.jdk }}
+        run: |
+          args=()
+          if [ -n "$JDK_IMAGE" ]; then args+=(--build-arg "JDK_IMAGE=$JDK_IMAGE"); fi
+          docker buildx build --load --provenance=false --build-arg VERSION=0.0.0-ci "${args[@]}" -f "$DOCKERFILE" -t jvmdiag:ci .
+      - name: Run native container regression
+        env:
+          KIND: ${{ matrix.kind }}
+        run: python3 scripts/container_smoke.py --image jvmdiag:ci --kind "$KIND" --version 0.0.0-ci
+  kubernetes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: .go-version
+          cache: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          version: v0.38.1
+      - name: Install pinned kind and matching kubectl
+        run: |
+          go install sigs.k8s.io/kind@v0.33.0
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/kubectl" https://dl.k8s.io/release/v1.32.2/bin/linux/amd64/kubectl
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/kubectl.sha256" https://dl.k8s.io/release/v1.32.2/bin/linux/amd64/kubectl.sha256
+          python3 - <<'PYCODE'
+          import hashlib,os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'kubectl'
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==p.with_suffix('.sha256').read_text().strip()
+          p.chmod(0o755)
+          PYCODE
+      - name: Real ephemeral-container regression
+        run: |
+          docker build -f Dockerfile.diagnostic -t jvmdiag-diagnostic:k8s-test .
+          docker build -f tests/kubernetes/Dockerfile.fixture -t jvmdiag-fixture:k8s-test .
+          kind create cluster --name jvmdiag-e2e --image kindest/node:v1.32.2 --kubeconfig "$RUNNER_TEMP/kubeconfig" --wait 120s
+          kind load docker-image jvmdiag-diagnostic:k8s-test jvmdiag-fixture:k8s-test --name jvmdiag-e2e
+          python3 tests/kubernetes/e2e.py --kubectl "$RUNNER_TEMP/kubectl" --kubeconfig "$RUNNER_TEMP/kubeconfig" --context kind-jvmdiag-e2e
+      - name: Remove only the test cluster
+        if: always()
+        run: kind delete cluster --name jvmdiag-e2e --kubeconfig "$RUNNER_TEMP/kubeconfig"
+  required:
+    name: Required checks
+    if: always()
+    needs: [policy, go, browser, jvm, containers, kubernetes]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Fail closed if any check failed, was cancelled or skipped
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PYCODE'
+          import json,os
+          results=json.loads(os.environ['RESULTS'])
+          assert results and all(j['result']=='success' for j in results.values()),results
+          PYCODE

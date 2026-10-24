@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>JVM Diagnostics Analyzer (Go) — AI-Powered JVM Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+    <script src="/js/marked.umd.js"></script>
+    <link rel="stylesheet" href="/css/app.css"/>
+    <style>
+        .ws-badge-bar {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.12); padding: 5px 12px;
+            border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; font-size: 0.8rem;
+        }
+        .ws-input {
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.25);
+            color: #fff; padding: 3px 8px; border-radius: 5px; font-size: 0.8rem;
+            width: 120px; font-family: 'Ubuntu Mono', monospace;
+        }
+        .ws-btn {
+            background: #fff; color: var(--yk-blue); border: none;
+            padding: 3px 8px; border-radius: 5px; font-size: 0.75rem;
+            font-weight: 600; cursor: pointer;
+        }
+        .hero {
+            background: linear-gradient(135deg, var(--yk-blue) 0%, var(--yk-blue-dark) 100%);
+            padding: 3.5rem 2rem 4.5rem; text-align: center; color: var(--yk-white);
+        }
+        .hero h1 { font-size: 2.4rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .hero p { font-size: 1.05rem; color: rgba(255,255,255,0.85); max-width: 650px; margin: 0 auto; }
+        .tools-section { max-width: 1180px; margin: -2.75rem auto 2.5rem; padding: 0 2rem; position: relative; z-index: 10; }
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.2rem; }
+        .tool-card {
+            background: var(--yk-white); border-radius: var(--yk-radius);
+            padding: 1.5rem; box-shadow: var(--yk-shadow); border: 1px solid var(--yk-border);
+            transition: all 0.25s ease; display: flex; flex-direction: column;
+            text-decoration: none; color: inherit; cursor: pointer;
+        }
+        .tool-card:hover { box-shadow: var(--yk-shadow-hover); transform: translateY(-3px); border-color: var(--yk-blue-light); }
+        .tool-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--yk-text-primary); }
+        .tool-card p { font-size: 0.85rem; color: var(--yk-text-secondary); line-height: 1.5; flex-grow: 1; margin-bottom: 1rem; }
+        .tool-card-cta { font-size: 0.82rem; font-weight: 600; color: var(--yk-blue); }
+        .card-panel {
+            background: var(--yk-white); border-radius: var(--yk-radius);
+            box-shadow: var(--yk-shadow); border: 1px solid var(--yk-border);
+            padding: 1.75rem; margin-bottom: 1.5rem;
+        }
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th, .history-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--yk-border); font-size: 0.875rem; }
+        .history-table th { background: var(--yk-bg-light); font-size: 0.75rem; text-transform: uppercase; color: var(--yk-text-muted); }
+        .type-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+        .badge-HEAP_DUMP { background: #e8f0fe; color: #004990; }
+        .badge-THREAD_DUMP { background: #f3e8ff; color: #7c3aed; }
+        .badge-GC_LOG { background: #ecfdf5; color: #059669; }
+        .badge-DIFF { background: #fef3c7; color: #b45309; }
+        .badge-DIFF { background: #fef3c7; color: #b45309; }
+        .badge-INCIDENT { background: #fee2e2; color: #b91c1c; }
+        .badge-NMT_CRASH { background: #fce7f3; color: #be185d; }
+        .badge-JFR { background: #ffedd5; color: #c2410c; }
+        .chat-box { height: 380px; overflow-y: auto; border: 1px solid var(--yk-border); border-radius: 8px; padding: 1rem; background: #fafbfc; margin-bottom: 1rem; }
+        .chat-msg { margin-bottom: 1rem; padding: 0.85rem 1rem; border-radius: 8px; line-height: 1.55; font-size: 0.9rem; }
+        .chat-msg.user { background: #e8f0fe; color: #003366; margin-left: 15%; }
+        .chat-msg.assistant { background: #ffffff; border: 1px solid var(--yk-border); margin-right: 8%; }
+        .tool-pill { display: inline-block; background: #f3e8ff; color: #6d28d9; font-family: 'Ubuntu Mono', monospace; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; margin: 2px 4px 6px 0; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; }
+        .form-control { width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--yk-border); border-radius: 6px; font-size: 0.9rem; font-family: inherit; }
+        .btn-primary { background: var(--yk-blue); color: #fff; border: none; padding: 0.65rem 1.25rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+        .btn-primary:hover { background: var(--yk-blue-hover); }
+        .btn-secondary { background: #e2e8f0; color: #1e293b; border: none; padding: 0.65rem 1.1rem; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<nav class="nav">
+    <a href="/" class="nav-brand" onclick="navTo('/'); return false;">
+        <div class="nav-brand-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <span class="nav-brand-text">JVM Diagnostics <small style="font-weight:400;opacity:0.8;font-size:0.75rem;">Go v3.0</small></span>
+    </a>
+    <ul class="nav-links">
+        <li><a href="/heap" id="nav-heap" onclick="navTo('/heap'); return false;">Heap</a></li>
+        <li><a href="/thread-dump" id="nav-thread-dump" onclick="navTo('/thread-dump'); return false;">Thread</a></li>
+        <li><a href="/gc-log" id="nav-gc-log" onclick="navTo('/gc-log'); return false;">GC Log</a></li>
+        <li><a href="/crash" id="nav-crash" onclick="navTo('/crash'); return false;">💥 Crash/NMT</a></li>
+        <li><a href="/jfr" id="nav-jfr" onclick="navTo('/jfr'); return false;">🔥 JFR</a></li>
+        <li><a href="/capture" id="nav-capture" onclick="navTo('/capture'); return false;">🎯 Live JVM</a></li>
+        <li><a href="/diff" id="nav-diff" onclick="navTo('/diff'); return false;">⚡ Diff</a></li>
+        <li><a href="/incident" id="nav-incident" onclick="navTo('/incident'); return false;">🚨 Incident</a></li>
+        <li><a href="/mcp" id="nav-mcp" onclick="navTo('/mcp'); return false;">🔌 MCP</a></li>
+        <li><a href="/settings" id="nav-settings" onclick="navTo('/settings'); return false;">⚙</a></li>
+    </ul>
+    <div class="ws-badge-bar" title="Multi-User Workspace Isolation: Enter your team or personal workspace ID">
+        <span>Workspace:</span>
+        <input type="text" id="ws-input" class="ws-input" value="default" placeholder="default"/>
+        <button class="ws-btn" onclick="applyWorkspace()">Switch</button>
+    </div>
+</nav>
+
+<div id="ai-unconfigured-banner" style="display:none;background:#fffbeb;border-bottom:1px solid #f59e0b;color:#92400e;padding:0.65rem 2rem;font-size:0.88rem;text-align:center;">
+    ⚠️ <strong>AI (LLM) API Anahtarı henüz yapılandırılmadı!</strong> Heap, Thread, GC, Diff ve Incident analizlerinde yapay zeka yorumlarını görmek için
+    <a href="/settings" onclick="navTo('/settings'); return false;" style="color:#b45309;font-weight:700;text-decoration:underline;margin-left:4px;">⚙ Settings sayfasından API Anahtarınızı tanımlayın &rarr;</a>
+</div>
+
+<!-- VIEW: LANDING DASHBOARD -->
+<div id="view-index" style="display:none;">
+    <section class="hero">
+        <div class="hero-content">
+            <h1>AI-Powered JVM Diagnostics</h1>
+            <p>Zero-dependency Go engine with instant Native HPROF streaming, Multi-Snapshot Diffs, Incident Correlation, Multi-User Workspaces &amp; MCP Server.</p>
+        </div>
+    </section>
+
+    <section class="tools-section">
+        <div class="tools-grid">
+            <a class="tool-card" onclick="navTo('/heap')">
+                <h3>🔬 Heap Dump (.hprof)</h3>
+                <p>Instant Native Go HPROF analysis (Histogram, Duplicate Strings, Largest Objects) + optional Eclipse MAT deep indexing.</p>
+                <span class="tool-card-cta">Analyze Heap &rarr;</span>
+            </a>
+            <a class="tool-card" onclick="navTo('/thread-dump')">
+                <h3>🧵 Thread Dump</h3>
+                <p>Lock contention graphs, deadlock cycle detection, thread pool saturation &amp; identical stack hotspots.</p>
+                <span class="tool-card-cta">Analyze Threads &rarr;</span>
+            </a>
+            <a class="tool-card" onclick="navTo('/gc-log')">
+                <h3>📊 GC Log</h3>
+                <p>Unified &amp; Legacy GC log analysis, P50/P95/P99 pauses, throughput %, allocation rate &amp; post-GC leak trend.</p>
+                <span class="tool-card-cta">Analyze GC Log &rarr;</span>
+            </a>
+            <a class="tool-card" onclick="navTo('/crash')">
+                <h3>💥 Crash (hs_err) &amp; NMT</h3>
+                <p>Analyze JVM fatal crash logs (hs_err_pid.log) and Native Memory Tracking (jcmd VM.native_memory) for off-heap OOMKilled issues.</p>
+                <span class="tool-card-cta">Analyze Crash / NMT &rarr;</span>
+            </a>
+            <a class="tool-card" onclick="navTo('/jfr')">
+                <h3>🔥 JFR Profiler (.jfr)</h3>
+                <p>Analyze Java Flight Recorder files for CPU hot methods, TLAB allocation churn, lock waits &amp; virtual thread pinning.</p>
+                <span class="tool-card-cta">Analyze JFR &rarr;</span>
+            </a>
+            <a class="tool-card" onclick="navTo('/capture')">
+                <h3>🎯 Live JVM Capture</h3>
+                <p>Discover local running Java processes and capture 3x sequential Thread Dumps + NMT in one click.</p>
+                <span class="tool-card-cta">Capture Live JVM &rarr;</span>
+            </a>
+            <a class="tool-card" onclick="navTo('/diff')">
+                <h3>⚡ Snapshot Diff</h3>
+                <p>Compare 2+ Thread Dumps to catch stuck RUNNABLE threads, or 2 Heap Dumps to pinpoint growing classes.</p>
+                <span class="tool-card-cta">Compare Snapshots &rarr;</span>
+            </a>
+            <a class="tool-card" onclick="navTo('/incident')">
+                <h3>🚨 Incident Correlation</h3>
+                <p>Combine GC Log + Thread Dump + Heap Dump into a single correlated root-cause analysis.</p>
+                <span class="tool-card-cta">Correlate Incident &rarr;</span>
+            </a>
+        </div>
+    </section>
+
+    <div class="main-container" style="max-width:1180px;">
+        <div class="card-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <div>
+                    <h2 style="font-size:1.25rem;">Saved Analyses (<span id="hist-ws-label">default</span>)</h2>
+                    <p style="font-size:0.85rem;color:var(--yk-text-muted);">Isolated per workspace on local or shared servers</p>
+                </div>
+                <button class="btn-secondary" onclick="loadHistory()">Refresh</button>
+            </div>
+            <div id="history-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW: SINGLE/MULTI ANALYZER (HEAP, THREAD, GC, DIFF, INCIDENT, HISTORY) -->
+<div id="view-analyzer" style="display:none;">
+    <section class="page-header">
+        <div class="page-header-content">
+            <h1 id="analyzer-title">Analysis</h1>
+            <p id="analyzer-subtitle"></p>
+        </div>
+    </section>
+
+    <div class="main-container">
+        <!-- Standard Single File Upload Box -->
+        <div id="single-upload-box" class="card-panel">
+            <div id="heap-engine-options" style="margin-bottom:1rem;display:none;padding:0.75rem 1rem;background:#f8fafc;border-radius:8px;border:1px solid var(--yk-border);">
+                <label style="display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:0.88rem;cursor:pointer;">
+                    <input type="checkbox" id="use-deep-mat"/>
+                    Enable Deep Eclipse MAT Indexing (in addition to fast Native Go HPROF analysis)
+                </label>
+                <span id="mat-avail-badge" style="margin-left:10px;font-size:0.78rem;padding:2px 8px;border-radius:4px;"></span>
+            </div>
+            <div id="drop-zone" class="drop-zone" onclick="document.getElementById('file-input').click()">
+                <h3 id="drop-title">Click or drag &amp; drop diagnostic file here</h3>
+                <p id="drop-hint">Supports streaming uploads up to 5 GB</p>
+                <input type="file" id="file-input" style="display:none;" onchange="handleSingleFileSelect(this.files)"/>
+            </div>
+        </div>
+
+        <!-- Diff Multi-File Upload Box -->
+        <div id="diff-upload-box" class="card-panel" style="display:none;">
+            <h3 style="margin-bottom:0.5rem;">Compare Multiple Snapshots Over Time</h3>
+            <p style="font-size:0.88rem;color:var(--yk-text-secondary);margin-bottom:1rem;">
+                Select <strong>2 or more Thread Dumps</strong> (taken 5-10 seconds apart) to find stuck RUNNABLE threads, OR <strong>2 Heap Dumps (.hprof)</strong> to identify growing leak classes.
+            </p>
+            <div class="form-group">
+                <input type="file" id="diff-files-input" multiple class="form-control"/>
+            </div>
+            <button class="btn-primary" onclick="submitDiffUpload()">Run Diff Analysis</button>
+        </div>
+
+        <!-- Incident Correlation Upload Box -->
+        <div id="incident-upload-box" class="card-panel" style="display:none;">
+            <h3 style="margin-bottom:0.5rem;">Holistic Incident Correlation (GC + Thread + Heap)</h3>
+            <p style="font-size:0.88rem;color:var(--yk-text-secondary);margin-bottom:1rem;">
+                Upload any combination of artifacts from the same production incident. The engine cross-correlates GC pauses, thread stacks, and heap consumers.
+            </p>
+            <div class="form-group">
+                <label>1. GC Log File (optional, .log / .txt)</label>
+                <input type="file" id="inc-gc-input" class="form-control"/>
+            </div>
+            <div class="form-group">
+                <label>2. Thread Dump File(s) (optional, select 1 or multiple for diff)</label>
+                <input type="file" id="inc-td-input" multiple class="form-control"/>
+            </div>
+            <div class="form-group">
+                <label>3. Heap Dump File (optional, .hprof)</label>
+                <input type="file" id="inc-heap-input" accept=".hprof" class="form-control"/>
+            </div>
+            <button class="btn-primary" onclick="submitIncidentUpload()">Run Correlated Incident Analysis</button>
+        </div>
+
+        <!-- Live JVM Capture Box -->
+        <div id="capture-upload-box" class="card-panel" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                <div>
+                    <h3 style="margin-bottom:0.2rem;">🎯 One-Click Live JVM Multi-Snapshot Capture</h3>
+                    <p style="font-size:0.85rem;color:var(--yk-text-secondary);">Automatically captures 3 sequential Thread Dumps + Native Memory (NMT) + VM Flags and runs correlated diff &amp; AI diagnosis.</p>
+                </div>
+                <button class="btn-secondary" onclick="loadLiveJVMProcesses()">🔄 Refresh Processes</button>
+            </div>
+            <div class="form-group">
+                <label>Select Running Local JVM Process (or enter PID below)</label>
+                <select id="live-jvm-select" class="form-control" onchange="document.getElementById('live-jvm-pid').value = this.value">
+                    <option value="">-- Click Refresh Processes to scan local JVMs --</option>
+                </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Target PID</label>
+                    <input type="number" id="live-jvm-pid" class="form-control" placeholder="e.g. 12345"/>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Thread Dump Count</label>
+                    <input type="number" id="live-jvm-count" class="form-control" value="3" min="2" max="10"/>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Interval (Seconds)</label>
+                    <input type="number" id="live-jvm-interval" class="form-control" value="2" min="1" max="15"/>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="submitLiveJVMCapture()">🚀 Capture Snapshots &amp; Run Root-Cause Analysis</button>
+        </div>
+
+        <!-- Progress & 3-Step Pipeline -->
+        <div id="job-status-box" class="card-panel" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem;">
+                <div>
+                    <strong id="job-status-label">Analyzing...</strong>
+                    <span id="job-quality-badge" role="status" style="margin-left:8px;"></span>
+                    <span id="job-engine-badge" style="margin-left:8px;font-size:0.75rem;background:#e8f0fe;color:#004990;padding:2px 8px;border-radius:4px;"></span>
+                </div>
+                <span id="job-file-label" style="font-family:'Ubuntu Mono',monospace;font-size:0.85rem;color:var(--yk-text-muted);"></span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;">
+                <div id="step-upload" style="padding:0.6rem 0.85rem;border-radius:6px;background:#ecfdf5;color:#065f46;font-size:0.83rem;font-weight:600;">
+                    1. 📤 Upload Complete
+                </div>
+                <div id="step-static" style="padding:0.6rem 0.85rem;border-radius:6px;background:#f1f5f9;color:#475569;font-size:0.83rem;font-weight:600;">
+                    2. 🔬 Static Engine Analysis
+                </div>
+                <div id="step-ai" style="padding:0.6rem 0.85rem;border-radius:6px;background:#f1f5f9;color:#475569;font-size:0.83rem;font-weight:600;">
+                    3. 🤖 AI (LLM) Root-Cause Analysis
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Box -->
+        <div id="job-error-box" class="card-panel" style="display:none;border-color:#f87171;background:#fef2f2;color:#b91c1c;">
+            <strong>Error:</strong> <span id="job-error-text"></span>
+        </div>
+
+        <!-- AI Response (Front & Center) -->
+        <div id="ai-response-box" class="card-panel" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid var(--yk-border);padding-bottom:0.75rem;">
+                <div>
+                    <h2 style="font-size:1.3rem;color:var(--yk-blue);">🤖 AI (LLM) Engineering Diagnosis</h2>
+                    <p style="font-size:0.8rem;color:var(--yk-text-muted);">Automated root-cause analysis &amp; tuning recommendations</p>
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button id="rerun-ai-btn" class="btn-secondary" onclick="rerunCurrentAI()">🔄 Re-run AI Analysis</button>
+                    <button id="save-analysis-btn" class="btn-primary" onclick="saveCurrentAnalysis()">Save to Workspace History</button>
+                </div>
+            </div>
+            <div id="ai-response-md" class="ai-result"></div>
+        </div>
+
+        <!-- Static Report (Collapsible) -->
+        <div id="static-report-box" class="card-panel" style="display:none;">
+            <details id="static-report-details">
+                <summary style="font-weight:700;cursor:pointer;color:var(--yk-blue);margin-bottom:0.75rem;">
+                    📄 Structured Static Engine Report (Click to expand/collapse raw metrics)
+                </summary>
+                <pre id="static-report-pre" style="background:#0f172a;color:#e2e8f0;padding:1rem;border-radius:8px;overflow-x:auto;font-size:0.8rem;max-height:420px;"></pre>
+            </details>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW: MCP & INTERACTIVE CHAT -->
+<div id="view-mcp" style="display:none;">
+    <section class="page-header">
+        <div class="page-header-content">
+            <h1>🔌 Interactive Heap MCP Server &amp; AI Chat</h1>
+            <p>Query your heap dump conversationally or connect Claude Desktop, Cursor, Windsurf, or Antigravity via MCP</p>
+        </div>
+    </section>
+
+    <div class="main-container" style="max-width:1180px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+            <div class="card-panel" style="margin-bottom:0;">
+                <h3 style="margin-bottom:0.75rem;color:var(--yk-blue);">1. Load Heap Dump (.hprof) into Workspace Session</h3>
+                <p style="font-size:0.85rem;color:var(--yk-text-secondary);margin-bottom:1rem;">
+                    Parsed in seconds by the Native Go HPROF Engine. Each workspace maintains its own isolated session on the server.
+                </p>
+                <input type="file" id="mcp-file-input" accept=".hprof" class="form-control" style="margin-bottom:0.75rem;"/>
+                <button class="btn-primary" onclick="uploadMcpHeap()">Upload &amp; Start Session</button>
+                <div id="mcp-session-info" style="margin-top:1rem;font-size:0.85rem;"></div>
+            </div>
+
+            <div class="card-panel" style="margin-bottom:0;">
+                <h3 style="margin-bottom:0.75rem;color:var(--yk-blue);">2. Connect Coding Agents (MCP Streamable HTTP &amp; Stdio)</h3>
+                <p style="font-size:0.82rem;color:var(--yk-text-secondary);margin-bottom:0.5rem;">
+                    <strong>Remote Server Streamable HTTP Endpoint (MCP 2025-03-26):</strong>
+                </p>
+                <pre id="mcp-http-config" style="background:#0f172a;color:#e2e8f0;padding:0.75rem;border-radius:6px;font-size:0.75rem;overflow-x:auto;margin-bottom:0.75rem;"></pre>
+                <p style="font-size:0.82rem;color:var(--yk-text-secondary);margin-bottom:0.5rem;">
+                    <strong>Local Zero-Server Stdio Mode:</strong>
+                </p>
+                <pre style="background:#0f172a;color:#e2e8f0;padding:0.65rem;border-radius:6px;font-size:0.75rem;overflow-x:auto;">jvmdiag mcp --file /path/to/dump.hprof</pre>
+            </div>
+        </div>
+
+        <div class="card-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <h3 style="color:var(--yk-blue);margin-bottom:0.15rem;">💬 Chat with Your Heap Dump (Autonomous Tool Calling)</h3>
+                    <span style="font-size:0.76rem;color:var(--yk-text-muted);">Tools: get_heap_summary, get_leak_suspects, get_class_histogram, get_dominator_tree, get_top_consumers, run_oql_query, get_thread_stacks</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <span id="chat-turn-badge" class="badge-pill" style="background:#e0f2fe;color:#0369a1;" title="Sliding context window keeps the last 10 turns clean">Memory: 0 / 10 turns</span>
+                    <button class="btn-secondary" style="padding:0.35rem 0.75rem;font-size:0.8rem;" onclick="clearChatSession()">🗑 Clear Chat</button>
+                </div>
+            </div>
+            <div id="chat-messages" class="chat-box">
+                <div class="chat-msg assistant">
+                    Upload a <code>.hprof</code> file above, then ask questions like:<br/>
+                    • <em>"What are the top memory leak suspects and duplicate strings?"</em><br/>
+                    • <em>"Show me the top 15 classes in package com.myapp"</em><br/>
+                    • <em>"Run an OQL query for java.lang.String"</em>
+                </div>
+            </div>
+            <div style="display:flex;gap:0.75rem;">
+                <input type="text" id="chat-input" class="form-control" placeholder="Ask anything about the loaded heap dump..." onkeydown="if(event.key==='Enter') sendChatMessage()"/>
+                <button class="btn-primary" onclick="sendChatMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW: SETTINGS -->
+<div id="view-settings" style="display:none;">
+    <section class="page-header">
+        <div class="page-header-content">
+            <h1>⚙ AI &amp; Server Configuration</h1>
+            <p>Configure global server defaults or workspace-specific AI API keys and custom prompts</p>
+        </div>
+    </section>
+
+    <div class="main-container" style="max-width:820px;">
+        <div class="card-panel">
+            <h3 style="margin-bottom:0.5rem;color:var(--yk-blue);">AI Provider Configuration</h3>
+            <p style="font-size:0.85rem;color:var(--yk-text-secondary);margin-bottom:1rem;">
+                Current Workspace: <strong id="settings-ws-name">default</strong> · Active Key: <code id="settings-masked-key">Not configured</code>
+            </p>
+            <div class="form-group">
+                <label>API Key (OpenRouter / OpenAI / Local)</label>
+                <input type="password" id="cfg-api-key" class="form-control" placeholder="sk-or-v1-... (leave blank to keep existing key)"/>
+            </div>
+            <div class="form-group">
+                <label>Base URL</label>
+                <input type="text" id="cfg-base-url" class="form-control" value="https://openrouter.ai/api"/>
+            </div>
+            <div class="form-group">
+                <label>Model</label>
+                <input type="text" id="cfg-model" class="form-control" value="openai/gpt-4o"/>
+            </div>
+            <div class="form-group">
+                <label>Temperature</label>
+                <input type="number" step="0.1" min="0" max="2" id="cfg-temp" class="form-control" value="0.3"/>
+            </div>
+            <div class="form-group">
+                <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="checkbox" id="cfg-insecure"/> Trust self-signed TLS certificates (for internal corporate LLM gateways)
+                </label>
+            </div>
+            <div class="form-group">
+                <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="checkbox" id="cfg-apply-global" checked/> Save as Server Global Default (uncheck to save only for current Workspace)
+                </label>
+            </div>
+            <div style="display:flex;gap:0.75rem;">
+                <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+                <button class="btn-secondary" onclick="testAIConnection()">Test Connection</button>
+            </div>
+            <div id="settings-status-msg" style="margin-top:1rem;font-size:0.88rem;"></div>
+        </div>
+
+        <div class="card-panel">
+            <h3 style="margin-bottom:0.5rem;color:var(--yk-blue);">Eclipse MAT Optional Deep Engine</h3>
+            <p style="font-size:0.85rem;color:var(--yk-text-secondary);margin-bottom:0.75rem;">
+                Native Go HPROF analysis works immediately with zero dependencies. Install Eclipse MAT only if you want deep retained-heap indexing. OQL tool execution is currently unsupported.
+            </p>
+            <div id="mat-settings-status" style="margin-bottom:0.75rem;font-size:0.88rem;"></div>
+            <div id="mat-progress-wrap" style="display:none;margin-bottom:1rem;">
+                <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px;">
+                    <span id="mat-progress-text">Downloading...</span>
+                    <strong id="mat-progress-pct">0%</strong>
+                </div>
+                <div style="width:100%;height:10px;background:#e2e8f0;border-radius:6px;overflow:hidden;">
+                    <div id="mat-progress-bar" style="width:0%;height:100%;background:linear-gradient(90deg, var(--yk-blue), #3b82f6);transition:width 0.3s ease;"></div>
+                </div>
+            </div>
+            <div id="mat-error-box" style="display:none;margin-bottom:0.75rem;padding:0.65rem 0.85rem;background:#fef2f2;border:1px solid #f87171;border-radius:6px;color:#b91c1c;font-size:0.85rem;"></div>
+            <button id="mat-download-btn" class="btn-secondary" onclick="triggerMatDownload()">Download &amp; Install Eclipse MAT (~150 MB)</button>
+        </div>
+
+        <div class="card-panel">
+            <h3 style="margin-bottom:0.5rem;color:var(--yk-blue);">Custom LLM System Prompts</h3>
+            <p style="font-size:0.85rem;color:var(--yk-text-secondary);margin-bottom:0.75rem;">
+                Customize the system prompt sent to the LLM for each diagnostic mode (Heap Dump, Thread Dump, GC Log, Snapshot Diff, and Incident Correlation).
+            </p>
+            <div class="form-group">
+                <label>Analysis Mode</label>
+                <select id="prompt-type-select" class="form-control" onchange="loadPromptEditor()">
+                    <option value="heap-dump">Heap Dump (.hprof)</option>
+                    <option value="thread-dump">Thread Dump &amp; Virtual Threads</option>
+                    <option value="gc-log">GC Log</option>
+                    <option value="nmt-crash">Crash (hs_err) &amp; Native Memory (NMT)</option>
+                    <option value="jfr">JFR Profiler (.jfr)</option>
+                    <option value="diff">Multi-Snapshot Diff</option>
+                    <option value="incident">Incident Correlation</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <textarea id="prompt-editor-text" rows="8" class="form-control" style="font-family:'Ubuntu Mono',monospace;font-size:0.8rem;"></textarea>
+            </div>
+            <div style="display:flex;gap:0.75rem;align-items:center;">
+                <button class="btn-primary" onclick="saveCustomPrompt()">Save Prompt</button>
+                <button class="btn-secondary" onclick="resetCustomPrompt()">Reset to Default</button>
+                <span id="prompt-status-msg" style="font-size:0.85rem;"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="max-width:1180px;margin:1rem auto;padding:0 2rem;">
+    <label for="access-token">Server access token (shared servers)</label>
+    <input id="access-token" type="password" autocomplete="off" placeholder="Workspace or administrator token" class="form-control" style="max-width:360px;display:inline-block;"/>
+    <button class="btn-secondary" onclick="applyAccessToken()">Connect</button>
+    <span id="access-status" role="status"></span>
+</div>
+<footer class="footer">
+    JVM Diagnostics Analyzer (Go Edition) &middot; Native HPROF + Optional MAT + Multi-User Workspaces + MCP
+</footer>
+
+<script>
+    let currentWorkspace = new URLSearchParams(window.location.search).get('workspace') || localStorage.getItem('jvmdiag_ws') || 'default';
+    let currentJobId = null;
+    let currentSessionId = null;
+    let pollTimer = null;
+
+    document.getElementById('ws-input').value = currentWorkspace;
+
+    let accessToken = '';
+
+    function applyAccessToken() {
+        accessToken = document.getElementById('access-token').value.trim();
+        document.getElementById('access-token').value = '';
+        checkGlobalBanner();
+        routeView(window.location.pathname);
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+    }
+
+    // Never insert provider HTML directly. Copy only safe Markdown elements and links.
+    function renderMarkdown(target, source) {
+        if (typeof marked === 'undefined') { target.textContent = source; return; }
+        const template = document.createElement('template');
+        template.innerHTML = marked.parse(String(source));
+        const allowed = new Set(['P','BR','STRONG','EM','DEL','UL','OL','LI','BLOCKQUOTE','PRE','CODE','H1','H2','H3','H4','H5','H6','HR','TABLE','THEAD','TBODY','TR','TH','TD','A']);
+        function copy(node) {
+            if (node.nodeType === 3) return document.createTextNode(node.textContent);
+            if (node.nodeType !== 1 || !allowed.has(node.tagName)) return document.createTextNode(node.textContent || '');
+            const clean = document.createElement(node.tagName.toLowerCase());
+            if (node.tagName === 'A') {
+                const href = node.getAttribute('href') || '';
+                try {
+                    const url = new URL(href, window.location.origin);
+                    if (['https:', 'http:'].includes(url.protocol)) {
+                        clean.href = url.href;
+                        clean.rel = 'noopener noreferrer';
+                    }
+                } catch (_) {}
+            }
+            for (const child of node.childNodes) clean.appendChild(copy(child));
+            return clean;
+        }
+        target.replaceChildren(...Array.from(template.content.childNodes, copy));
+    }
+
+    function apiHeaders(extra = {}) {
+        return Object.assign({ 'X-Workspace-ID': currentWorkspace }, accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}, extra);
+    }
+
+    function applyWorkspace() {
+        const val = document.getElementById('ws-input').value.trim() || 'default';
+        currentWorkspace = val;
+        currentJobId = null;
+        currentSessionId = null;
+        document.getElementById('chat-messages').replaceChildren();
+        localStorage.setItem('jvmdiag_ws', val);
+        const url = new URL(window.location.href);
+        url.searchParams.set('workspace', val);
+        window.history.replaceState({}, '', url.toString());
+        document.getElementById('hist-ws-label').textContent = val;
+        document.getElementById('settings-ws-name').textContent = val;
+        checkGlobalBanner();
+    routeView(window.location.pathname);
+    }
+
+    function navTo(path) {
+        const url = new URL(window.location.origin + path);
+        if (currentWorkspace !== 'default') {
+            url.searchParams.set('workspace', currentWorkspace);
+        }
+        window.history.pushState({}, '', url.toString());
+        routeView(path);
+    }
+
+    window.addEventListener('popstate', () => routeView(window.location.pathname));
+
+    function routeView(path) {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+        ['view-index', 'view-analyzer', 'view-mcp', 'view-settings'].forEach(id => {
+            document.getElementById(id).style.display = 'none';
+        });
+
+        document.getElementById('hist-ws-label').textContent = currentWorkspace;
+        document.getElementById('settings-ws-name').textContent = currentWorkspace;
+
+        if (path === '/' || path === '') {
+            document.getElementById('view-index').style.display = 'block';
+            loadHistory();
+        } else if (path === '/mcp') {
+            document.getElementById('nav-mcp').classList.add('active');
+            document.getElementById('view-mcp').style.display = 'block';
+            refreshMcpStatus();
+        } else if (path === '/settings' || path === '/setup') {
+            document.getElementById('nav-settings').classList.add('active');
+            document.getElementById('view-settings').style.display = 'block';
+            loadSettings();
+        } else if (path.startsWith('/history/')) {
+            const id = path.replace('/history/', '');
+            document.getElementById('view-analyzer').style.display = 'block';
+            loadSavedRecord(id);
+        } else {
+            setupAnalyzerView(path);
+        }
+    }
+
+    function setupAnalyzerView(path) {
+        document.getElementById('view-analyzer').style.display = 'block';
+        document.getElementById('single-upload-box').style.display = 'none';
+        document.getElementById('diff-upload-box').style.display = 'none';
+        document.getElementById('incident-upload-box').style.display = 'none';
+        document.getElementById('capture-upload-box').style.display = 'none';
+        document.getElementById('heap-engine-options').style.display = 'none';
+        document.getElementById('job-status-box').style.display = 'none';
+        document.getElementById('job-error-box').style.display = 'none';
+        document.getElementById('static-report-box').style.display = 'none';
+        document.getElementById('ai-response-box').style.display = 'none';
+
+        if (path === '/heap') {
+            document.getElementById('nav-heap').classList.add('active');
+            document.getElementById('analyzer-title').textContent = '🔬 Heap Dump Analysis (.hprof)';
+            document.getElementById('analyzer-subtitle').textContent = 'Fast Native Go HPROF analysis + optional Eclipse MAT deep indexing';
+            document.getElementById('single-upload-box').style.display = 'block';
+            document.getElementById('heap-engine-options').style.display = 'block';
+            document.getElementById('file-input').accept = '.hprof';
+            window.currentUploadEndpoint = '/api/heap/upload';
+            checkMatBadge();
+        } else if (path === '/thread-dump') {
+            document.getElementById('nav-thread-dump').classList.add('active');
+            document.getElementById('analyzer-title').textContent = '🧵 Thread Dump & Loom Virtual Thread Analysis';
+            document.getElementById('analyzer-subtitle').textContent = 'Lock contention graph, deadlocks, Java 21+ Virtual Thread Pinning (text & JSON dumps)';
+            document.getElementById('single-upload-box').style.display = 'block';
+            document.getElementById('file-input').accept = '.txt,.tdump,.log,.json';
+            window.currentUploadEndpoint = '/api/thread-dump/upload';
+        } else if (path === '/gc-log') {
+            document.getElementById('nav-gc-log').classList.add('active');
+            document.getElementById('analyzer-title').textContent = '📊 GC Log Analysis';
+            document.getElementById('analyzer-subtitle').textContent = 'Pause percentiles (P50/P95/P99), throughput %, allocation rate & post-GC leak trend';
+            document.getElementById('single-upload-box').style.display = 'block';
+            document.getElementById('file-input').accept = '.log,.txt';
+            window.currentUploadEndpoint = '/api/gc-log/upload';
+        } else if (path === '/crash') {
+            document.getElementById('nav-crash').classList.add('active');
+            document.getElementById('analyzer-title').textContent = '💥 JVM Crash (hs_err) & Native Memory (NMT) Analysis';
+            document.getElementById('analyzer-subtitle').textContent = 'Diagnose container OOMKilled, off-heap DirectByteBuffer/Thread/Metaspace bloat & SIGSEGV crashes';
+            document.getElementById('single-upload-box').style.display = 'block';
+            document.getElementById('file-input').accept = '.log,.txt';
+            window.currentUploadEndpoint = '/api/crash/upload';
+        } else if (path === '/jfr') {
+            document.getElementById('nav-jfr').classList.add('active');
+            document.getElementById('analyzer-title').textContent = '🔥 Java Flight Recorder (.jfr) Analysis';
+            document.getElementById('analyzer-subtitle').textContent = 'CPU hot methods, TLAB object allocation pressure, monitor contention & virtual thread pinning';
+            document.getElementById('single-upload-box').style.display = 'block';
+            document.getElementById('file-input').accept = '.jfr,.json,.txt';
+            window.currentUploadEndpoint = '/api/jfr/upload';
+        } else if (path === '/capture') {
+            document.getElementById('nav-capture').classList.add('active');
+            document.getElementById('analyzer-title').textContent = '🎯 Live JVM Process Capture & Correlation';
+            document.getElementById('analyzer-subtitle').textContent = 'Attach to a local JVM process to capture sequential Thread Dumps + Native Memory (NMT)';
+            document.getElementById('capture-upload-box').style.display = 'block';
+            loadLiveJVMProcesses();
+        } else if (path === '/diff') {
+            document.getElementById('nav-diff').classList.add('active');
+            document.getElementById('analyzer-title').textContent = '⚡ Multi-Snapshot Diff Analysis';
+            document.getElementById('analyzer-subtitle').textContent = 'Compare sequential Thread Dumps (stuck threads) or Heap Dumps (growing classes)';
+            document.getElementById('diff-upload-box').style.display = 'block';
+        } else if (path === '/incident') {
+            document.getElementById('nav-incident').classList.add('active');
+            document.getElementById('analyzer-title').textContent = '🚨 Incident Correlation Engine';
+            document.getElementById('analyzer-subtitle').textContent = 'Correlate GC Log + Thread Dump(s) + Heap Dump from the same incident';
+            document.getElementById('incident-upload-box').style.display = 'block';
+        }
+    }
+
+    async function checkMatBadge() {
+        try {
+            const res = await fetch('/api/mat/status', { headers: apiHeaders() });
+            const data = await res.json();
+            const badge = document.getElementById('mat-avail-badge');
+            if (data.available) {
+                badge.textContent = 'MAT Installed';
+                badge.style.background = '#d1fae5';
+                badge.style.color = '#059669';
+            } else {
+                badge.textContent = 'MAT Not Installed (Using Fast Native HPROF Engine)';
+                badge.style.background = '#e0f2fe';
+                badge.style.color = '#0369a1';
+            }
+        } catch (e) {}
+    }
+
+    async function handleSingleFileSelect(files) {
+        if (!files || files.length === 0) return;
+        const formData = new FormData();
+        formData.append('file', files[0]);
+        if (document.getElementById('use-deep-mat')?.checked) {
+            formData.append('deepMat', 'true');
+        }
+        await startUploadJob(window.currentUploadEndpoint, formData);
+    }
+
+    async function submitDiffUpload() {
+        const input = document.getElementById('diff-files-input');
+        if (!input.files || input.files.length < 2) {
+            alert('Please select at least 2 files to compare.');
+            return;
+        }
+        const formData = new FormData();
+        for (const f of input.files) {
+            formData.append('files', f);
+        }
+        await startUploadJob('/api/diff/upload', formData);
+    }
+
+    async function submitIncidentUpload() {
+        const gc = document.getElementById('inc-gc-input').files[0];
+        const tds = document.getElementById('inc-td-input').files;
+        const heap = document.getElementById('inc-heap-input').files[0];
+        if (!gc && (!tds || tds.length === 0) && !heap) {
+            alert('Please select at least one diagnostic file.');
+            return;
+        }
+        const formData = new FormData();
+        if (gc) formData.append('gcFile', gc);
+        if (tds) {
+            for (const f of tds) formData.append('threadFiles', f);
+        }
+        if (heap) formData.append('heapFile', heap);
+        await startUploadJob('/api/incident/upload', formData);
+    }
+
+    async function loadLiveJVMProcesses() {
+        const sel = document.getElementById('live-jvm-select');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Scanning local JVM processes...</option>';
+        try {
+            const res = await fetch('/api/jvm/processes', { headers: apiHeaders() });
+            const data = await res.json();
+            const procs = data.processes || [];
+            if (procs.length === 0) {
+                sel.innerHTML = '<option value="">No local JVM processes found (or enter PID manually)</option>';
+                return;
+            }
+            sel.innerHTML = '<option value="">-- Select a running JVM process --</option>';
+            for (const p of procs) {
+                const opt = document.createElement('option');
+                opt.value = p.pid;
+                opt.textContent = `PID ${p.pid} — ${p.mainClass} ${p.args ? '(' + p.args.slice(0, 80) + ')' : ''}`;
+                sel.appendChild(opt);
+            }
+        } catch (e) {
+            sel.innerHTML = '<option value="">Failed scanning JVM processes</option>';
+        }
+    }
+
+    async function submitLiveJVMCapture() {
+        const pid = parseInt(document.getElementById('live-jvm-pid').value, 10);
+        const count = parseInt(document.getElementById('live-jvm-count').value, 10) || 3;
+        const intervalSeconds = parseInt(document.getElementById('live-jvm-interval').value, 10) || 2;
+        if (!pid || pid <= 0) {
+            alert('Please select or enter a valid target JVM PID.');
+            return;
+        }
+        document.getElementById('job-error-box').style.display = 'none';
+        document.getElementById('job-status-box').style.display = 'block';
+        document.getElementById('job-status-label').textContent = `Capturing ${count} sequential snapshots from PID ${pid}...`;
+        try {
+            const res = await fetch('/api/jvm/capture', {
+                method: 'POST',
+                headers: apiHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ pid, count, intervalSeconds })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Capture failed');
+            currentJobId = data.analysisId;
+            pollJobStatus(currentJobId);
+        } catch (err) {
+            document.getElementById('job-error-box').style.display = 'block';
+            document.getElementById('job-error-text').textContent = err.message;
+        }
+    }
+
+    async function startUploadJob(url, formData) {
+        document.getElementById('job-error-box').style.display = 'none';
+        document.getElementById('job-status-box').style.display = 'block';
+        document.getElementById('job-status-label').textContent = 'Uploading & queuing analysis...';
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: apiHeaders(),
+                body: formData
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Upload failed');
+            }
+            currentJobId = data.analysisId;
+            pollJobStatus(currentJobId);
+        } catch (err) {
+            document.getElementById('job-error-box').style.display = 'block';
+            document.getElementById('job-error-text').textContent = err.message;
+        }
+    }
+
+    function pollJobStatus(id) {
+        if (pollTimer) clearInterval(pollTimer);
+        const check = async () => {
+            try {
+                const res = await fetch(`/api/analysis/${id}/status`, { headers: apiHeaders() });
+                if (!res.ok) return;
+                const st = await res.json();
+                document.getElementById('job-file-label').textContent = st.fileName || '';
+                document.getElementById('job-engine-badge').textContent = st.engineUsed || st.analysisType;
+                const quality = st.assessment;
+                document.getElementById('job-quality-badge').textContent = quality ? 'Data scope: ' + quality.status : '';
+                document.getElementById('job-quality-badge').title = quality ? [quality.scope, ...(quality.warnings || []), ...(quality.limitations || [])].join('\n') : '';
+                document.getElementById('job-status-label').textContent = `Status: ${st.status}`;
+
+                const stepStatic = document.getElementById('step-static');
+                const stepAI = document.getElementById('step-ai');
+                if (st.status === 'ANALYZING' || st.status === 'QUEUED') {
+                    stepStatic.style.background = '#fef3c7';
+                    stepStatic.style.color = '#92400e';
+                    stepStatic.textContent = '2. 🔬 Running Static Engine...';
+                    stepAI.style.background = '#f1f5f9';
+                    stepAI.style.color = '#475569';
+                    stepAI.textContent = '3. 🤖 Waiting for Static Report...';
+                } else if (st.status === 'GENERATING_AI_RESPONSE') {
+                    stepStatic.style.background = '#ecfdf5';
+                    stepStatic.style.color = '#065f46';
+                    stepStatic.textContent = '2. ✓ Static Report Ready';
+                    stepAI.style.background = '#e0f2fe';
+                    stepAI.style.color = '#0369a1';
+                    stepAI.textContent = '3. 🤖 Calling LLM for Root-Cause Analysis...';
+                    document.getElementById('ai-response-box').style.display = 'block';
+                    document.getElementById('ai-response-md').innerHTML = `<div style="display:flex;align-items:center;gap:10px;color:var(--yk-blue);padding:1rem 0;">
+                        <div class="spinner"></div>
+                        <strong>LLM is analyzing the static report and generating root-cause recommendations...</strong>
+                    </div>`;
+                } else if (st.status === 'COMPLETED') {
+                    stepStatic.style.background = '#ecfdf5';
+                    stepStatic.style.color = '#065f46';
+                    stepStatic.textContent = st.assessment?.status === 'limited' ? '2. Static analysis complete with data limitations' : '2. ✓ Static Report Ready';
+                    stepAI.style.background = '#ecfdf5';
+                    stepAI.style.color = '#065f46';
+                    stepAI.textContent = st.assessment?.status === 'limited' ? '3. Interpretation limited to available evidence' : '3. Processing complete — see report evidence';
+                }
+
+                if (st.staticReport) {
+                    document.getElementById('static-report-box').style.display = 'block';
+                    document.getElementById('static-report-pre').textContent = st.staticReport;
+                }
+                if (st.aiResponse) {
+                    document.getElementById('ai-response-box').style.display = 'block';
+                    document.getElementById('save-analysis-btn').style.display = 'inline-block';
+                    renderMarkdown(document.getElementById('ai-response-md'), st.aiResponse);
+                }
+                if (st.status === 'COMPLETED' || st.status === 'FAILED') {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                    if (st.status === 'FAILED') {
+                        document.getElementById('job-error-box').style.display = 'block';
+                        document.getElementById('job-error-text').textContent = st.errorMessage || 'Analysis failed';
+                    }
+                }
+            } catch (e) {}
+        };
+        check();
+        pollTimer = setInterval(check, 1000);
+    }
+
+    async function rerunCurrentAI() {
+        if (!currentJobId) return;
+        document.getElementById('ai-response-box').style.display = 'block';
+        document.getElementById('ai-response-md').innerHTML = `<div style="display:flex;align-items:center;gap:10px;color:var(--yk-blue);padding:1rem 0;">
+            <div class="spinner"></div>
+            <strong>Re-running LLM diagnosis with current AI settings...</strong>
+        </div>`;
+        const res = await fetch(`/api/analysis/${currentJobId}/ai`, {
+            method: 'POST',
+            headers: apiHeaders()
+        });
+        if (res.ok) {
+            pollJobStatus(currentJobId);
+        }
+    }
+
+    async function saveCurrentAnalysis() {
+        if (!currentJobId) return;
+        const res = await fetch(`/api/analysis/${currentJobId}/save`, {
+            method: 'POST',
+            headers: apiHeaders()
+        });
+        if (res.ok) {
+            document.getElementById('save-analysis-btn').textContent = '✓ Saved to Workspace';
+        }
+    }
+
+    async function loadHistory() {
+        const res = await fetch('/api/history', { headers: apiHeaders() });
+        const list = await res.json();
+        const container = document.getElementById('history-container');
+        if (!res.ok) { container.textContent = list.error || 'Unable to load history'; return; }
+        if (!list || list.length === 0) {
+            container.innerHTML = `<p style="color:var(--yk-text-muted);font-size:0.9rem;">No saved analyses in workspace <code>${escapeHTML(currentWorkspace)}</code> yet.</p>`;
+            return;
+        }
+        const table = document.createElement('table');
+        table.className = 'history-table';
+        const head = table.createTHead().insertRow();
+        for (const label of ['Type', 'File(s)', 'Engine', 'Data scope', 'Saved At', 'Actions']) {
+            const th = document.createElement('th'); th.textContent = label; head.appendChild(th);
+        }
+        const body = table.createTBody();
+        for (const r of list) {
+            const row = body.insertRow();
+            for (const value of [r.analysisType, r.fileName, r.engineUsed || 'standard', r.assessment?.status || 'legacy / unverified', new Date(r.savedAt).toLocaleString()]) {
+                row.insertCell().textContent = value;
+            }
+            const actions = row.insertCell();
+            const view = document.createElement('a');
+            const path = '/history/' + encodeURIComponent(r.id);
+            view.href = path; view.textContent = 'View';
+            view.addEventListener('click', event => { event.preventDefault(); navTo(path); });
+            const remove = document.createElement('button'); remove.textContent = 'Delete';
+            remove.addEventListener('click', () => deleteHistory(r.id));
+            actions.append(view, document.createTextNode(' '), remove);
+        }
+        container.replaceChildren(table);
+    }
+
+    async function loadSavedRecord(id) {
+        const res = await fetch(`/api/history/${id}`, { headers: apiHeaders() });
+        if (!res.ok) { navTo('/'); return; }
+        const r = await res.json();
+        document.getElementById('single-upload-box').style.display = 'none';
+        document.getElementById('diff-upload-box').style.display = 'none';
+        document.getElementById('incident-upload-box').style.display = 'none';
+        document.getElementById('analyzer-title').textContent = `Saved ${r.analysisType}: ${r.fileName}`;
+        document.getElementById('job-quality-badge').textContent = r.assessment ? 'Data scope: ' + r.assessment.status : 'Legacy report — not revalidated';
+        document.getElementById('analyzer-subtitle').textContent = `Workspace: ${r.workspaceId} · Saved ${new Date(r.savedAt).toLocaleString()}`;
+        if (r.staticReport) {
+            document.getElementById('static-report-box').style.display = 'block';
+            document.getElementById('static-report-pre').textContent = r.staticReport;
+        }
+        if (r.aiResponse) {
+            document.getElementById('ai-response-box').style.display = 'block';
+            document.getElementById('save-analysis-btn').style.display = 'none';
+            renderMarkdown(document.getElementById('ai-response-md'), r.aiResponse);
+        }
+    }
+
+    async function deleteHistory(id) {
+        await fetch(`/api/history/${id}`, { method: 'DELETE', headers: apiHeaders() });
+        loadHistory();
+    }
+
+    // MCP & Chat
+    async function uploadMcpHeap() {
+        const f = document.getElementById('mcp-file-input').files[0];
+        if (!f) { alert('Select a .hprof file first.'); return; }
+        const fd = new FormData();
+        fd.append('file', f);
+        document.getElementById('mcp-session-info').innerHTML = 'Uploading & parsing heap dump...';
+        const res = await fetch('/api/mcp/upload', { method: 'POST', headers: apiHeaders(), body: fd });
+        const data = await res.json();
+        if (!res.ok) {
+            document.getElementById('mcp-session-info').innerHTML = `<span style="color:red;">${escapeHTML(data.error)}</span>`;
+            return;
+        }
+        currentSessionId = data.sessionId;
+        setTimeout(refreshMcpStatus, 600);
+    }
+
+    async function refreshMcpStatus() {
+        const res = await fetch('/api/mcp/status', { headers: apiHeaders() });
+        const st = await res.json();
+        if (!res.ok) { currentSessionId = null; document.getElementById('mcp-session-info').textContent = st.error || 'Unable to load session'; return; }
+        const mcpUrl = st.sessionId
+            ? `${window.location.origin}/mcp/${st.sessionId}?workspace=${encodeURIComponent(currentWorkspace)}`
+            : `${window.location.origin}/mcp?workspace=${encodeURIComponent(currentWorkspace)}`;
+        document.getElementById('mcp-http-config').textContent = JSON.stringify({
+            mcpServers: {
+                "jvm-diagnostics": {
+                    type: "streamable-http",
+                    url: mcpUrl,
+                    headers: accessToken ? {Authorization: 'Bearer <server-access-token>'} : undefined
+                }
+            }
+        }, null, 2);
+
+        const info = document.getElementById('mcp-session-info');
+        if (!st.active) {
+            info.innerHTML = `<span style="color:var(--yk-text-muted);">No active heap dump session in workspace <code>${escapeHTML(currentWorkspace)}</code>.</span>`;
+        } else {
+            currentSessionId = st.sessionId;
+            info.innerHTML = `<div style="padding:0.65rem;background:#ecfdf5;border:1px solid #34d399;border-radius:6px;color:#065f46;">
+                <strong>Active Session:</strong> <code>${escapeHTML(st.fileName)}</code> (${escapeHTML(st.engineUsed || 'parsing...')}) · Parsed: <strong>${st.parsed ? 'Ready' : 'In Progress'}</strong>
+                · Data scope: <strong>${escapeHTML(st.assessment?.status || 'pending')}</strong>
+                <small>${escapeHTML(st.assessment?.warnings?.join('; ') || '')}</small>
+                ${st.parseError ? '<br><span style="color:red;">' + escapeHTML(st.parseError) + '</span>' : ''}
+            </div>`;
+        }
+        await refreshChatTurnStatus();
+    }
+
+    function updateTurnBadge(turns, maxTurns) {
+        const badge = document.getElementById('chat-turn-badge');
+        if (!badge) return;
+        const max = maxTurns || 10;
+        badge.textContent = `Memory: ${turns} / ${max} turns`;
+        if (turns >= max) {
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#b45309';
+            badge.title = `Sliding window full (${max}/${max}) — oldest turns are automatically rotated out`;
+        } else {
+            badge.style.background = '#e0f2fe';
+            badge.style.color = '#0369a1';
+        }
+    }
+
+    async function refreshChatTurnStatus() {
+        try {
+            const url = currentSessionId ? `/api/mcp/chat?sessionId=${encodeURIComponent(currentSessionId)}` : '/api/mcp/chat';
+            const res = await fetch(url, { headers: apiHeaders() });
+            if (!res.ok) return;
+            const data = await res.json();
+            updateTurnBadge(data.turnCount || 0, data.maxTurns || 10);
+        } catch (e) {}
+    }
+
+    async function clearChatSession() {
+        const url = currentSessionId ? `/api/mcp/chat?sessionId=${encodeURIComponent(currentSessionId)}` : '/api/mcp/chat';
+        await fetch(url, { method: 'DELETE', headers: apiHeaders() });
+        updateTurnBadge(0, 10);
+        const box = document.getElementById('chat-messages');
+        box.innerHTML = `<div class="chat-msg assistant">
+            <em>Conversation memory cleared.</em> Ask a new question about your loaded heap dump!
+        </div>`;
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = '';
+
+        const box = document.getElementById('chat-messages');
+        box.innerHTML += `<div class="chat-msg user">${escapeHTML(msg)}</div>`;
+        const assistId = 'msg-' + Date.now();
+        box.innerHTML += `<div id="${assistId}" class="chat-msg assistant"><div class="tools-area"></div><div class="md-area"><em>Thinking...</em></div></div>`;
+        box.scrollTop = box.scrollHeight;
+
+        const res = await fetch('/api/mcp/chat', {
+            method: 'POST',
+            headers: apiHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ message: msg, sessionId: currentSessionId, stream: true })
+        });
+
+        if (!res.ok) {
+            const error = await res.json();
+            document.getElementById(assistId).querySelector('.md-area').textContent = error.error || 'Chat request failed';
+            return;
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullText = '';
+        const container = document.getElementById(assistId);
+        const toolsArea = container.querySelector('.tools-area');
+        const mdArea = container.querySelector('.md-area');
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                try {
+                    const msgObj = JSON.parse(trimmed);
+                    const ev = msgObj.event;
+                    const payload = msgObj.data || {};
+                    if (ev === 'meta' || ev === 'done') {
+                        if (typeof payload.turn === 'number') {
+                            updateTurnBadge(payload.turn, payload.maxTurns || 10);
+                        }
+                    } else if (ev === 'tool_call') {
+                        toolsArea.innerHTML += `<span class="tool-pill">🔧 ${escapeHTML(payload.name)}(${escapeHTML(payload.args || '')})</span>`;
+                    } else if (ev === 'text') {
+                        fullText += payload.content || '';
+                        renderMarkdown(mdArea, fullText);
+                    } else if (ev === 'error') {
+                        mdArea.innerHTML = `<span style="color:red;">${escapeHTML(payload.message)}</span>`;
+                    }
+                } catch (e) {}
+                box.scrollTop = box.scrollHeight;
+            }
+        }
+    }
+
+    // Settings & MAT Polling
+    let matPollTimer = null;
+
+    async function checkGlobalBanner() {
+        try {
+            const res = await fetch('/api/settings', { headers: apiHeaders() });
+            const s = await res.json();
+            document.getElementById('access-status').textContent = res.ok ? '' : (s.error || 'Access denied');
+            document.getElementById('ai-unconfigured-banner').style.display = s.configured ? 'none' : 'block';
+        } catch (e) {}
+    }
+
+    async function loadSettings() {
+        const res = await fetch('/api/settings', { headers: apiHeaders() });
+        const s = await res.json();
+        if (!res.ok) { document.getElementById('access-status').textContent = s.error || 'Access denied'; return; }
+        document.getElementById('ai-unconfigured-banner').style.display = s.configured ? 'none' : 'block';
+        document.getElementById('settings-masked-key').textContent = s.maskedApiKey || '';
+        document.getElementById('cfg-apply-global').disabled = !s.canManageGlobal;
+        if (!s.canManageGlobal) document.getElementById('cfg-apply-global').checked = false;
+        document.getElementById('cfg-base-url').disabled = !s.canManageGlobal;
+        document.getElementById('cfg-insecure').disabled = !s.canManageGlobal;
+        document.getElementById('cfg-base-url').value = s.baseUrl || 'https://openrouter.ai/api';
+        document.getElementById('cfg-model').value = s.model || 'openai/gpt-4o';
+        document.getElementById('cfg-temp').value = s.temperature || 0.3;
+        document.getElementById('cfg-insecure').checked = !!s.trustInsecureCerts;
+
+        await refreshMatSettingsUI();
+        await loadPromptEditor();
+    }
+
+    async function loadPromptEditor() {
+        const t = document.getElementById('prompt-type-select').value;
+        const res = await fetch(`/api/prompts/${t}`, { headers: apiHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('prompt-editor-text').value = data.current || '';
+        document.getElementById('prompt-status-msg').textContent = data.isCustom ? '(Custom prompt active)' : '(Using default built-in prompt)';
+    }
+
+    async function saveCustomPrompt() {
+        const t = document.getElementById('prompt-type-select').value;
+        const content = document.getElementById('prompt-editor-text').value;
+        const res = await fetch(`/api/prompts/${t}`, {
+            method: 'POST',
+            headers: apiHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ content })
+        });
+        const data = await res.json();
+        document.getElementById('prompt-status-msg').textContent = data.message || data.error;
+    }
+
+    async function resetCustomPrompt() {
+        const t = document.getElementById('prompt-type-select').value;
+        const res = await fetch(`/api/prompts/${t}`, { method: 'DELETE', headers: apiHeaders() });
+        const data = await res.json();
+        document.getElementById('prompt-editor-text').value = data.current || '';
+        document.getElementById('prompt-status-msg').textContent = data.message || '';
+    }
+
+    async function refreshMatSettingsUI() {
+        try {
+            const matRes = await fetch('/api/mat/status', { headers: apiHeaders() });
+            const matSt = await matRes.json();
+            const statusEl = document.getElementById('mat-settings-status');
+            const progWrap = document.getElementById('mat-progress-wrap');
+            const progBar = document.getElementById('mat-progress-bar');
+            const progText = document.getElementById('mat-progress-text');
+            const progPct = document.getElementById('mat-progress-pct');
+            const errBox = document.getElementById('mat-error-box');
+            const btn = document.getElementById('mat-download-btn');
+
+            if (matSt.error) {
+                errBox.style.display = 'block';
+                errBox.textContent = matSt.error;
+            } else {
+                errBox.style.display = 'none';
+            }
+
+            if (matSt.downloading) {
+                statusEl.innerHTML = `Status: <strong style="color:var(--yk-blue);">Downloading &amp; Installing...</strong>`;
+                progWrap.style.display = 'block';
+                const pct = matSt.progress || 0;
+                progBar.style.width = `${pct}%`;
+                progPct.textContent = `${pct}%`;
+                progText.textContent = matSt.status || 'Downloading Eclipse MAT...';
+                btn.disabled = true;
+                btn.textContent = 'Downloading in progress...';
+                if (!matPollTimer) {
+                    matPollTimer = setInterval(refreshMatSettingsUI, 800);
+                }
+            } else {
+                if (matPollTimer) {
+                    clearInterval(matPollTimer);
+                    matPollTimer = null;
+                }
+                if (matSt.available) {
+                    progWrap.style.display = 'none';
+                    statusEl.innerHTML = `<div style="padding:0.65rem;background:#ecfdf5;border:1px solid #34d399;border-radius:6px;color:#065f46;">
+                        <strong>✓ Installed &amp; Ready</strong><br/>
+                        <small style="font-family:'Ubuntu Mono',monospace;">${escapeHTML(matSt.scriptPath || matSt.status || '')}</small>
+                    </div>`;
+                    btn.disabled = true;
+                    btn.textContent = '✓ Eclipse MAT Installed';
+                } else {
+                    progWrap.style.display = 'none';
+                    statusEl.innerHTML = `Status: <strong>Not Installed</strong> (Using Fast Native Go HPROF Engine)`;
+                    btn.disabled = false;
+                    btn.textContent = 'Download & Install Eclipse MAT (~150 MB)';
+                }
+            }
+        } catch (e) {}
+    }
+
+    async function saveSettings() {
+        const body = {
+            apiKey: document.getElementById('cfg-api-key').value.trim(),
+            baseUrl: document.getElementById('cfg-base-url').value.trim(),
+            model: document.getElementById('cfg-model').value.trim(),
+            temperature: String(document.getElementById('cfg-temp').value),
+            trustInsecureCerts: String(document.getElementById('cfg-insecure').checked),
+            applyGlobal: String(document.getElementById('cfg-apply-global').checked)
+        };
+        const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: apiHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        document.getElementById('settings-status-msg').innerHTML = `<span style="color:var(--yk-green);font-weight:600;">${escapeHTML(data.message || data.error)}</span>`;
+        loadSettings();
+    }
+
+    async function testAIConnection() {
+        document.getElementById('settings-status-msg').textContent = 'Testing AI connection...';
+        const res = await fetch('/api/settings/test', { method: 'POST', headers: apiHeaders() });
+        const data = await res.json();
+        const color = data.status === 'success' ? 'var(--yk-green)' : 'var(--yk-red)';
+        document.getElementById('settings-status-msg').innerHTML = `<span style="color:${color};font-weight:600;">${escapeHTML(data.message || data.error)}</span>`;
+    }
+
+    async function triggerMatDownload() {
+        document.getElementById('mat-download-btn').disabled = true;
+        document.getElementById('mat-progress-wrap').style.display = 'block';
+        document.getElementById('mat-progress-text').textContent = 'Starting download...';
+        await fetch('/api/mat/download', { method: 'POST', headers: apiHeaders() });
+        await refreshMatSettingsUI();
+        if (!matPollTimer) {
+            matPollTimer = setInterval(refreshMatSettingsUI, 800);
+        }
+    }
+
+    checkGlobalBanner();
+    routeView(window.location.pathname);
+</script>
+</body>
+</html>

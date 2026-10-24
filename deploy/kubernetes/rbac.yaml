@@ -1,0 +1,33 @@
+# Operator permissions only. Bind to a human/group; do not grant to the Java workload.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jvmdiag-operator
+  namespace: jvmdiag-demo
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/ephemeralcontainers"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["pods/attach", "pods/exec"]
+    verbs: ["create", "get"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jvmdiag-operator
+  namespace: jvmdiag-demo
+subjects:
+  - kind: Group
+    name: jvmdiag-operators
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: jvmdiag-operator
+  apiGroup: rbac.authorization.k8s.io

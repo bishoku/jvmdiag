@@ -1,0 +1,14 @@
+name: Feature request
+description: Propose a diagnostic capability or usability improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes: {label: Problem and use case}
+    validations: {required: true}
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal and alternatives
+      description: "For diagnostics, describe the evidence needed to validate the result."
+    validations: {required: true}
