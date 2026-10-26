@@ -19,7 +19,7 @@ Release archives cover Linux AMD64/ARM64, macOS Intel/Apple Silicon and Windows 
 Choose the OS/architecture in the release asset name. `x86_64` means `amd64`; `aarch64`/Apple Silicon mean `arm64`. Replace the example version with an existing release.
 
 ```sh
-VERSION=0.0.3
+VERSION=0.0.4
 # Linux ARM64: PLATFORM=linux_arm64; Intel Mac: darwin_amd64; Apple Silicon: darwin_arm64
 PLATFORM=linux_amd64
 ASSET="jvmdiag_${VERSION}_${PLATFORM}.tar.gz"
@@ -55,7 +55,7 @@ Checksums detect corruption; downloading a checksum beside an asset is not an in
 Download `jvmdiag_VERSION_windows_amd64.zip` and `SHA256SUMS` from the same release. In PowerShell:
 
 ```powershell
-$Version = '0.0.3'
+$Version = '0.0.4'
 $Asset = "jvmdiag_${Version}_windows_amd64.zip"
 $Base = "https://github.com/bishoku/jvmdiag/releases/download/v$Version"
 Invoke-WebRequest "$Base/$Asset" -OutFile $Asset
@@ -87,7 +87,7 @@ go build -trimpath -o jvmdiag ./cmd/jvmdiag
 After a tagged release exists, Go users can alternatively install from source with:
 
 ```sh
-go install github.com/bishoku/jvmdiag/cmd/jvmdiag@v0.0.3
+go install github.com/bishoku/jvmdiag/cmd/jvmdiag@v0.0.4
 ```
 
 This compiles locally and reports the module version. Its executable bytes differ from the GitHub archive and do not carry that archive's provenance attestation. Add `$(go env GOPATH)/bin` to PATH if needed. Go v0 and v1 module paths have no major-version suffix.
@@ -109,15 +109,15 @@ Replace the placeholders; on Unix set `chmod 600 server.env`. Do not commit it o
 docker volume create jvmdiag-data
 docker run --rm --name jvmdiag -p 127.0.0.1:8080:8080 \
   --env-file server.env --mount source=jvmdiag-data,target=/data \
-  ghcr.io/bishoku/jvmdiag:0.0.3
+  ghcr.io/bishoku/jvmdiag:0.0.4
 ```
 
-Open `http://localhost:8080` and connect using your workspace name/token. Keep the host port bound to loopback for this example. For remote deployment, configure TLS at the reverse proxy and `JVMDIAG_PUBLIC_ORIGIN`; see [security and configuration](SECURITY-AND-CONFIGURATION.md). The server image has no JDK or MAT runtime. Add a compatible runtime yourself or use a diagnostic image for CLI/JVM work. Builds do not publish ports or credentials automatically.
+Open `http://localhost:8080` and connect using your workspace name/token. Keep the host port bound to loopback for this example. For remote deployment, configure TLS at the reverse proxy and `JVMDIAG_PUBLIC_ORIGIN`; see [security and configuration](SECURITY-AND-CONFIGURATION.md). The default server image has no JDK or MAT runtime. For a full JDK and preinstalled MAT, build the [optional MAT image](MAT-IMAGE.md). Add a compatible runtime yourself or use a diagnostic image for CLI/JVM work. Builds do not publish ports or credentials automatically.
 
-Versioned diagnostic images are `ghcr.io/bishoku/jvmdiag:0.0.3-diagnostic-jdk17` and `:0.0.3-diagnostic-jdk25`. Stable aliases are `latest`, `diagnostic-jdk17` and `diagnostic-jdk25`; prereleases never update them. Prefer versioned tags or, for immutable deployments, verified image digests. For example:
+Versioned diagnostic images are `ghcr.io/bishoku/jvmdiag:0.0.4-diagnostic-jdk17` and `:0.0.4-diagnostic-jdk25`. Stable aliases are `latest`, `diagnostic-jdk17` and `diagnostic-jdk25`; prereleases never update them. Prefer versioned tags or, for immutable deployments, verified image digests. For example:
 
 ```sh
-gh attestation verify oci://ghcr.io/bishoku/jvmdiag:0.0.3 --repo bishoku/jvmdiag \
+gh attestation verify oci://ghcr.io/bishoku/jvmdiag:0.0.4 --repo bishoku/jvmdiag \
   --signer-workflow bishoku/jvmdiag/.github/workflows/release.yml
 # Use the verified digest from the attestation/registry for deployment:
 # docker pull ghcr.io/bishoku/jvmdiag@sha256:VERIFIED_DIGEST
@@ -130,3 +130,11 @@ Follow [the Kubernetes guide](../deploy/kubernetes/README.md) for ephemeral-cont
 Back up the configured data directory/volume before an upgrade. Stop the old process, verify the new package, replace the executable or pinned image and restart it using the same data directory and configuration. Keep the previous verified version for rollback. Diagnostic schema changes are described in the changelog; historical saved reports are not automatically re-analyzed. Do not assume a future data migration is reversible.
 
 To remove the binary, stop its process and delete the executable from your installation directory. Configuration/history defaults to `~/.jvmdiag`, or `--data-dir` for servers; delete it only when you intend to discard saved data. Stopping/removing a container does not delete a named volume. There is no telemetry or AI-provider credential required for static local analysis; disable AI explicitly with `--no-ai` in scripted analysis.
+
+For persistent cluster deployments see [Kubernetes/OpenShift server examples](../deploy/README.md). See [large dump limits](LARGE-DUMPS.md) before sizing Pods, and [MAT proxy/offline setup](MAT-PROXY.md) for corporate networks.
+
+## Docker Hub and Apple Silicon
+
+The release workflow publishes to both `ghcr.io/bishoku/jvmdiag` and `barishoku/jvmdiag` on Docker Hub. Starting with v0.0.4, both registries provide versioned minimal server, `-diagnostic-jdk17`, `-diagnostic-jdk25` and `-mat-jdk17` tags, plus stable aliases. See the [tag table](RELEASING.md#what-the-tag-workflow-publishes). Existing releases do not gain these tags retroactively.
+
+All variants have Linux AMD64 and ARM64 manifests. Apple Silicon Macs running Docker Desktop select ARM64 automatically; no `--platform linux/amd64` emulation flag is needed. For the Web UI with preinstalled MAT and Java, use `barishoku/jvmdiag:mat-jdk17` after the v0.0.4 release, or pin its version/digest. Follow the [MAT container guide](MAT-IMAGE.md) for tokens, storage and resource sizing.

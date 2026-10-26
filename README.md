@@ -109,6 +109,10 @@ The target image needs no shell or JDK tools. The [Kubernetes guide](deploy/kube
 
 - [Installation, containers and upgrades](docs/INSTALL.md)
 - [Kubernetes live diagnostics](deploy/kubernetes/README.md)
+- [Web UI server on Kubernetes and OpenShift](deploy/README.md)
+- [Large dump limits and sizing](docs/LARGE-DUMPS.md)
+- [Container image with preinstalled Eclipse MAT](docs/MAT-IMAGE.md)
+- [MAT downloads behind a proxy or offline](docs/MAT-PROXY.md)
 - [Architecture and capabilities](docs/ARCHITECTURE.md)
 - [Shared-server security and configuration](docs/SECURITY-AND-CONFIGURATION.md)
 - [Diagnostic metrics, evidence and limitations](docs/DIAGNOSTIC-SEMANTICS.md)

@@ -22,6 +22,9 @@ Multi-architecture Linux images (AMD64/ARM64):
 - `{image}:{v}` — native server
 - `{image}:{v}-diagnostic-jdk17` — HotSpot JDK 17 diagnostic CLI
 - `{image}:{v}-diagnostic-jdk25` — HotSpot JDK 25 diagnostic CLI
+- `{image}:{v}-mat-jdk17` — Web UI with Eclipse MAT and JDK 17
+
+The same tags are also available at `docker.io/barishoku/jvmdiag`. Docker Desktop on Apple Silicon selects Linux ARM64 automatically.
 
 Pin image digests for deployment. Diagnostic data can contain secrets; AI and live capture have the limits documented in the repository.
 '''

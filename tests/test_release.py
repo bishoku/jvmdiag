@@ -34,8 +34,19 @@ class ReleaseSafetyTests(unittest.TestCase):
         publish=source.split('  publish:',1)[1]
         self.assertIn('group: release-publication',publish)
         self.assertIn('cancel-in-progress: false',publish)
-        for name in ('Dockerfile','Dockerfile.diagnostic'):
+        for name in ('Dockerfile','Dockerfile.diagnostic','Dockerfile.mat'):
             self.assertIn('golang:'+ (root/'.go-version').read_text().strip()+'-bookworm',(root/name).read_text())
+
+    def test_native_mat_matrix_and_both_registry_gates_are_present(self):
+        for name in ('release.yml','verify.yml'):
+            text=(release.ROOT/'.github/workflows'/name).read_text()
+            for arch in ('amd64','arm64'):
+                self.assertIn('arch: '+arch+', variant: mat17, file: Dockerfile.mat',text)
+            self.assertIn('scripts/mat_image_smoke.py',text)
+        text=(release.ROOT/'.github/workflows/release.yml').read_text()
+        self.assertEqual(text.count('password: ${{ secrets.DOCKERHUB_TOKEN }}'),2)
+        self.assertIn('--directory images/ghcr',text)
+        self.assertIn('--directory images/hub --image docker.io/barishoku/jvmdiag',text)
 
     def test_semver_rejects_malformed_or_injectable_tags(self):
         for tag in ('3.0.0','v01.0.0','v1.02.0','v1.0.03','v1.0.0-01','v1.0.0-rc.01',
@@ -111,13 +122,44 @@ class ReleaseSafetyTests(unittest.TestCase):
     def test_image_promotion_rejects_mixed_missing_and_invalid_candidates(self):
         with tempfile.TemporaryDirectory() as temp:
             self.candidates(temp);args=(temp,'ghcr.io/bishoku/jvmdiag','v3.0.0',COMMIT)
-            self.assertEqual(len(promote_images.plan(*args)),3)
+            self.assertEqual(len(promote_images.plan(*args)),4)
             p=pathlib.Path(temp)/'server-amd64.json';d=json.loads(p.read_text());d['COMMIT']='b'*40;p.write_text(json.dumps(d))
             with self.assertRaises(ValueError):promote_images.plan(*args)
             self.candidates(temp);p.unlink()
             with self.assertRaises(ValueError):promote_images.plan(*args)
             self.candidates(temp);d=json.loads(p.read_text());d['digest']='sha256:nope';p.write_text(json.dumps(d))
             with self.assertRaises(ValueError):promote_images.plan(*args)
+
+    def test_dockerhub_candidates_require_both_architectures_and_matching_registry(self):
+        with tempfile.TemporaryDirectory() as temp:
+            self.candidates(temp)
+            hub='docker.io/barishoku/jvmdiag'
+            for p in pathlib.Path(temp).glob('*.json'):
+                d=json.loads(p.read_text());d['IMAGE']=hub;p.write_text(json.dumps(d))
+            result=promote_images.plan(temp,hub,'v3.0.0',COMMIT)
+            self.assertEqual(set(result['mat17']),{'amd64','arm64'})
+            with self.assertRaisesRegex(ValueError,'provenance'):
+                promote_images.plan(temp,'ghcr.io/bishoku/jvmdiag','v3.0.0',COMMIT)
+            (pathlib.Path(temp)/'mat17-arm64.json').unlink()
+            with self.assertRaises(ValueError):promote_images.plan(temp,hub,'v3.0.0',COMMIT)
+
+    def test_registry_publication_verifies_mat_and_jdk_version_indexes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            self.candidates(temp)
+            hub='docker.io/barishoku/jvmdiag'
+            for p in pathlib.Path(temp).glob('*.json'):
+                d=json.loads(p.read_text());d['IMAGE']=hub;p.write_text(json.dumps(d))
+            children=[{'digest':'sha256:'+str(i+1)*64,'platform':{'os':'linux','architecture':a}}
+                      for i,a in enumerate(('amd64','arm64'))]
+            observed=[]
+            def inspect(ref):
+                observed.append(ref)
+                return None if observed.count(ref)==1 else {'manifests':children}
+            identity={'org.opencontainers.image.version':'3.0.0','org.opencontainers.image.revision':COMMIT}
+            with mock.patch.object(promote_images,'inspect',side_effect=inspect),mock.patch.object(promote_images,'identity',return_value=identity),mock.patch.object(promote_images,'digest',return_value='sha256:'+'a'*64),mock.patch.object(promote_images,'docker') as docker:
+                promote_images.promote(temp,hub,'v3.0.0',COMMIT)
+            tags=[c.args[c.args.index('--tag')+1] for c in docker.call_args_list]
+            self.assertEqual(set(tags),{hub+':3.0.0'+s for s in promote_images.VARIANTS.values()})
 
     def test_prerelease_never_touches_stable_aliases(self):
         with tempfile.TemporaryDirectory() as temp:
