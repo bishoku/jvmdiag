@@ -155,7 +155,9 @@ jobs:
         run: python3 scripts/container_smoke.py --image jvmdiag:ci --kind "$KIND" --version 0.0.0-ci
       - name: Verify bundled MAT with real HPROF and no network
         if: matrix.variant == 'mat17'
-        run: python3 scripts/mat_image_smoke.py --image jvmdiag:ci
+        run: |
+          python3 scripts/mat_image_smoke.py --image jvmdiag:ci
+          python3 scripts/container_smoke.py --image jvmdiag:ci --kind server --version 0.0.0-ci --expect-mat
   kubernetes:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
