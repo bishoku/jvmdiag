@@ -1,5 +1,7 @@
 # Analyze a running Java Pod with an ephemeral container
 
+For the persistent Web UI/API/MCP server deployment, see [Kubernetes and OpenShift server examples](../README.md).
+
 The diagnostic image includes a native `jvmdiag` binary and a full Temurin HotSpot JDK (`jcmd`, `jstack`, `jfr`). It runs as UID/GID 10001 by default and starts with CLI help, without opening a server port. The small web-server `Dockerfile` remains separate. No Kubernetes client or API credentials are required inside the diagnostic container.
 
 ## Build an image matching the JVM

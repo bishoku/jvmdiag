@@ -1,0 +1,21 @@
+# Strategic merge patch; create jvmdiag-corporate-ca ConfigMap first.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jvmdiag
+spec:
+  template:
+    spec:
+      containers:
+        - name: jvmdiag
+          env:
+            - name: SSL_CERT_DIR
+              value: /etc/ssl/certs:/etc/jvmdiag-ca
+          volumeMounts:
+            - name: corporate-ca
+              mountPath: /etc/jvmdiag-ca
+              readOnly: true
+      volumes:
+        - name: corporate-ca
+          configMap:
+            name: jvmdiag-corporate-ca

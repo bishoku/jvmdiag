@@ -1,0 +1,16 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: jvmdiag
+  annotations:
+    haproxy.router.openshift.io/timeout: 30m
+spec:
+  host: jvmdiag.apps.example.com
+  to:
+    kind: Service
+    name: jvmdiag
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

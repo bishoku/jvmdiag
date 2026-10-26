@@ -4,6 +4,16 @@ Changes follow [Semantic Versioning](https://semver.org/). Dates are recorded wh
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-10-26
+
+- Publish tested AMD64/ARM64 server, JDK 17/25 diagnostic and MAT+JDK17 images to GHCR and Docker Hub (`barishoku/jvmdiag`), with distinct version and stable tags.
+
+- Add an optional full-JDK image with checksum-pinned Eclipse MAT and offline, read-only, arbitrary-UID heap-analysis smoke coverage.
+
+- Add persistent Web UI/API/MCP server examples for Kubernetes and OpenShift, including PVCs, access secrets, an OpenShift TLS Route, and optional proxy/CA configuration.
+- Document actual large-dump capacity limits, memory sizing, timeouts and offline analysis alternatives; replace the unverified 5 GB UI claim.
+- Document backend MAT proxy/trust/offline workflows and add a CONNECT-proxy regression for downloader error reporting.
+
 ## [0.0.3] - 2026-10-24
 
 - Discover embedded HotSpot JVMs launched by native executables such as IntelliJ IDEA, including Linux systems without JDK discovery tools.

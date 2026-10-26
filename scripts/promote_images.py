@@ -8,16 +8,16 @@ import re
 import subprocess
 from release import version
 
-VARIANTS={'server':'', 'diagnostic17':'-diagnostic-jdk17', 'diagnostic25':'-diagnostic-jdk25'}
-ALIASES={'server':'latest','diagnostic17':'diagnostic-jdk17','diagnostic25':'diagnostic-jdk25'}
+VARIANTS={'server':'', 'diagnostic17':'-diagnostic-jdk17', 'diagnostic25':'-diagnostic-jdk25', 'mat17':'-mat-jdk17'}
+ALIASES={'server':'latest','diagnostic17':'diagnostic-jdk17','diagnostic25':'diagnostic-jdk25','mat17':'mat-jdk17'}
 
 def plan(directory,image,tag,commit):
     v=version(tag)
-    if not re.fullmatch(r'ghcr\.io/[a-z0-9][a-z0-9_.-]*/[a-z0-9][a-z0-9_.-]*',image):raise ValueError('unexpected registry/repository')
+    if not re.fullmatch(r'ghcr\.io/[a-z0-9][a-z0-9_.-]*/[a-z0-9][a-z0-9_.-]*',image) and image!='docker.io/barishoku/jvmdiag':raise ValueError('unexpected registry/repository')
     if not re.fullmatch('[0-9a-f]{40}',commit):raise ValueError('invalid source commit')
     result={key:{} for key in VARIANTS}
     files=list(pathlib.Path(directory).glob('*.json'))
-    if len(files)!=6:raise ValueError('exactly six native image manifests are required')
+    if len(files)!=2*len(VARIANTS):raise ValueError('exactly two native image manifests per variant are required')
     for path in files:
         d=json.loads(path.read_text())
         if d['IMAGE']!=image or d['VERSION']!=v or d['COMMIT']!=commit:raise ValueError('mixed release image provenance')

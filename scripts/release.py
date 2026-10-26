@@ -25,6 +25,12 @@ FILES = {'LICENSE':'LICENSE', 'NOTICE':'NOTICE', 'LICENSE-Go.txt':'LICENSE-Go.tx
          'deploy/kubernetes/README.md':'deploy/kubernetes/README.md',
          'deploy/kubernetes/rbac.yaml':'deploy/kubernetes/rbac.yaml',
          'deploy/kubernetes/profile-restricted.json':'deploy/kubernetes/profile-restricted.json'}
+for directory in ('docs', 'deploy'):
+    for path in (ROOT / directory).rglob('*'):
+        if path.is_file():
+            relative = path.relative_to(ROOT).as_posix()
+            FILES[relative] = relative
+
 SEMVER = re.compile(r'v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?\Z')
 
 def version(tag):
