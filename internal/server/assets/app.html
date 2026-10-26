@@ -437,7 +437,7 @@
             <p style="font-size:0.85rem;color:var(--yk-text-secondary);margin-bottom:0.75rem;">
                 Native Go HPROF analysis works immediately with zero dependencies. Install Eclipse MAT only if you want deep retained-heap indexing. OQL tool execution is currently unsupported.
             </p>
-            <div id="mat-settings-status" style="margin-bottom:0.75rem;font-size:0.88rem;"></div>
+            <div id="mat-settings-status" style="margin-bottom:0.75rem;font-size:0.88rem;">MAT status has not been checked.</div>
             <div id="mat-progress-wrap" style="display:none;margin-bottom:1rem;">
                 <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px;">
                     <span id="mat-progress-text">Downloading...</span>
@@ -448,7 +448,7 @@
                 </div>
             </div>
             <div id="mat-error-box" style="display:none;margin-bottom:0.75rem;padding:0.65rem 0.85rem;background:#fef2f2;border:1px solid #f87171;border-radius:6px;color:#b91c1c;font-size:0.85rem;"></div>
-            <button id="mat-download-btn" class="btn-secondary" onclick="triggerMatDownload()">Download &amp; Install Eclipse MAT (~150 MB)</button>
+            <button id="mat-download-btn" class="btn-secondary" onclick="triggerMatDownload()" disabled>Check MAT status first</button>
         </div>
 
         <div class="card-panel">
@@ -1108,6 +1108,7 @@
     }
 
     async function loadSettings() {
+        await refreshMatSettingsUI();
         const res = await fetch('/api/settings', { headers: apiHeaders() });
         const s = await res.json();
         if (!res.ok) { document.getElementById('access-status').textContent = s.error || 'Access denied'; return; }
@@ -1122,7 +1123,6 @@
         document.getElementById('cfg-temp').value = s.temperature || 0.3;
         document.getElementById('cfg-insecure').checked = !!s.trustInsecureCerts;
 
-        await refreshMatSettingsUI();
         await loadPromptEditor();
     }
 
@@ -1159,6 +1159,7 @@
         try {
             const matRes = await fetch('/api/mat/status', { headers: apiHeaders() });
             const matSt = await matRes.json();
+            if (!matRes.ok) throw new Error(matSt.error || 'Unable to check MAT status');
             const statusEl = document.getElementById('mat-settings-status');
             const progWrap = document.getElementById('mat-progress-wrap');
             const progBar = document.getElementById('mat-progress-bar');
@@ -1206,7 +1207,14 @@
                     btn.textContent = 'Download & Install Eclipse MAT (~150 MB)';
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            if (matPollTimer) { clearInterval(matPollTimer); matPollTimer = null; }
+            document.getElementById('mat-progress-wrap').style.display = 'none';
+            document.getElementById('mat-settings-status').textContent = 'MAT status unavailable: ' + e.message;
+            const btn = document.getElementById('mat-download-btn');
+            btn.disabled = true;
+            btn.textContent = 'MAT status unavailable';
+        }
     }
 
     async function saveSettings() {

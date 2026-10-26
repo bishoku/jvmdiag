@@ -166,9 +166,12 @@ func captureBundle(ctx context.Context, opts Options, run commandRunner) (bundle
 			parent = "/tmp"
 		}
 	}
-	if !filepath.IsAbs(parent) || filepath.Clean(parent) != parent || strings.ContainsAny(parent, "\x00\r\n\t \"'") {
-		return bundle, fmt.Errorf("target directory must be a clean absolute path without whitespace or quotes")
+	if !filepath.IsAbs(parent) || strings.ContainsAny(parent, "\x00\r\n\t \"'") {
+		return bundle, fmt.Errorf("target directory must be an absolute path without whitespace or quotes")
 	}
+	// macOS TMPDIR commonly ends in a separator. Validate the original input
+	// before cleaning so unsafe characters cannot disappear with a dot segment.
+	parent = filepath.Clean(parent)
 	visibleParent := parent
 	if root != "" {
 		visibleParent = filepath.Join(root, parent)

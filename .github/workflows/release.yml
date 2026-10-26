@@ -101,7 +101,9 @@ jobs:
           python3 scripts/container_smoke.py --image jvmdiag:candidate --kind "$KIND" --version "$VERSION"
       - name: Verify bundled MAT with real HPROF and no network
         if: matrix.variant == 'mat17'
-        run: python3 scripts/mat_image_smoke.py --image jvmdiag:candidate
+        run: |
+          python3 scripts/mat_image_smoke.py --image jvmdiag:candidate
+          python3 scripts/container_smoke.py --image jvmdiag:candidate --kind server --version "$VERSION" --expect-mat
       - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io

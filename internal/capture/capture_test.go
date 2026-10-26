@@ -74,6 +74,63 @@ func TestCaptureStagesTargetFilesAndCleansUp(t *testing.T) {
 		t.Fatal("manifest missing completion")
 	}
 }
+func TestCaptureNormalizesTargetDirectory(t *testing.T) {
+	for _, source := range []string{"explicit", "system-temp"} {
+		t.Run(source, func(t *testing.T) {
+			fakeTools(t)
+			parent := t.TempDir()
+			out := filepath.Join(t.TempDir(), "capture")
+			withSeparator := parent + string(os.PathSeparator)
+			opts := Options{PID: 42, Count: 1, WithHeap: true, JFRDuration: time.Nanosecond, OutputDir: out}
+			if source == "explicit" {
+				opts.TargetDir = withSeparator
+			} else {
+				// TMPDIR on Unix; TMP/TEMP on Windows. Reproduce macOS's trailing slash.
+				for _, key := range []string{"TMPDIR", "TMP", "TEMP"} {
+					t.Setenv(key, withSeparator)
+				}
+			}
+			b, err := captureBundle(context.Background(), opts, fakeCommand)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if b.Status != "complete" || b.HeapDumpPath == "" || b.JFRPath == "" {
+				t.Fatalf("capture did not complete: %+v", b)
+			}
+			for path, signature := range map[string]string{b.HeapDumpPath: "JAVA PROFILE ", b.JFRPath: "FLR\x00"} {
+				data, err := os.ReadFile(path)
+				if err != nil || !strings.HasPrefix(string(data), signature) {
+					t.Fatalf("missing captured artifact %s: %v", path, err)
+				}
+			}
+			entries, err := os.ReadDir(parent)
+			if err != nil || len(entries) != 0 {
+				t.Fatalf("staging files leaked: %v %v", entries, err)
+			}
+		})
+	}
+}
+
+func TestCaptureRejectsUnsafeTargetDirectoryBeforeNormalization(t *testing.T) {
+	fakeTools(t)
+	parent := t.TempDir()
+	for _, target := range []string{"relative", parent + " bad/..", parent + "\t", parent + "\n", parent + "\r", parent + "\x00", parent + "'", parent + "\""} {
+		t.Run(target, func(t *testing.T) {
+			artifactCommand := false
+			run := func(ctx context.Context, tool string, args ...string) ([]byte, error) {
+				if args[1] == "GC.heap_dump" || strings.HasPrefix(args[1], "JFR.") {
+					artifactCommand = true
+				}
+				return fakeCommand(ctx, tool, args...)
+			}
+			b, err := captureBundle(context.Background(), Options{PID: 42, Count: 1, WithHeap: true, TargetDir: target, OutputDir: filepath.Join(t.TempDir(), "out")}, run)
+			if err == nil || !strings.Contains(err.Error(), "target directory") || b.Status != "partial" || artifactCommand {
+				t.Fatalf("unsafe target accepted: %+v %v, artifact command: %v", b, err, artifactCommand)
+			}
+		})
+	}
+}
+
 func TestRequestedArtifactFailureIsPartial(t *testing.T) {
 	fakeTools(t)
 	run := func(ctx context.Context, tool string, args ...string) ([]byte, error) {

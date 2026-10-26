@@ -4,6 +4,14 @@ Changes follow [Semantic Versioning](https://semver.org/). Dates are recorded wh
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-10-26
+
+- List every supported CLI flag and its description in top-level help; support focused `help <command>` from the same flag definitions used during execution.
+
+- Normalize capture staging directories before use so macOS TMPDIR paths ending in a separator work for heap/JFR capture; keep rejecting relative paths and unsafe characters.
+
+- Show unavailable MAT status explicitly when authentication or network requests fail, rather than leaving an active download button; document personal/shared Docker usage.
+
 ## [0.0.4] - 2026-10-26
 
 - Publish tested AMD64/ARM64 server, JDK 17/25 diagnostic and MAT+JDK17 images to GHCR and Docker Hub (`barishoku/jvmdiag`), with distinct version and stable tags.
