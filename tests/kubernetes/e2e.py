@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Opt-in, real ephemeral-container tests. Only runs against an explicitly selected kind context."""
+"""Opt-in, real ephemeral-container tests. Runs against explicitly selected local kind or MicroK8s contexts."""
 import argparse
 import json
 import pathlib
@@ -12,11 +12,19 @@ p = argparse.ArgumentParser()
 p.add_argument('--kubeconfig', required=True)
 p.add_argument('--kubectl', default='kubectl')
 p.add_argument('--context', required=True)
+p.add_argument('--allow-microk8s', action='store_true',
+               help='Explicitly permit the microk8s context; creates/deletes only a unique test namespace')
+p.add_argument('--allow-unrestricted-rbac', action='store_true',
+               help='Report RBAC denial checks as skipped when cluster authorization is unrestricted')
+p.add_argument('--results-dir', type=pathlib.Path,
+               help='New directory for synthetic logs, Pod snapshots and copied artifacts')
 p.add_argument('--image', default='jvmdiag-diagnostic:k8s-test')
 p.add_argument('--fixture-image', default='jvmdiag-fixture:k8s-test')
 a = p.parse_args()
-if not a.context.startswith('kind-'):
-    p.error('this test only permits an explicitly selected kind context')
+if not (a.context.startswith('kind-') or (a.context == 'microk8s' and a.allow_microk8s)):
+    p.error('select a kind context, or microk8s with --allow-microk8s')
+if a.results_dir:
+    a.results_dir.mkdir(mode=0o700, parents=True, exist_ok=False)
 ns = 'jvmdiag-test-' + uuid.uuid4().hex[:8]
 base = [a.kubectl, '--kubeconfig', a.kubeconfig, '--context', a.context]
 
@@ -57,6 +65,10 @@ def debug(podname, name, command, profile, expected=0, attach=False):
     status=next(s for s in data['status']['ephemeralContainerStatuses'] if s['name']==name)
     log=k('-n',ns,'logs',podname,'-c',name,operator=True).stdout
     assert status['state']['terminated']['exitCode']==expected, (name,status,log)
+    print(f'PASS: {podname}/{name} (exit {expected})', flush=True)
+    if a.results_dir:
+        (a.results_dir / f'{podname}-{name}.log').write_text(log)
+        (a.results_dir / f'{podname}-{name}.json').write_text(json.dumps(data, indent=2))
     return log,data
 
 profile=json.loads((ROOT/'deploy/kubernetes/profile-restricted.json').read_text())
@@ -65,8 +77,16 @@ try:
     k('label','namespace',ns,'pod-security.kubernetes.io/enforce=restricted')
     rbac=(ROOT/'deploy/kubernetes/rbac.yaml').read_text().replace('namespace: jvmdiag-demo','namespace: '+ns)
     k('apply','-f','-',data=rbac)
+    unrestricted = k('-n',ns,'auth','can-i','list','secrets',operator=True,check=False).stdout.strip() == 'yes'
+    if unrestricted and not a.allow_unrestricted_rbac:
+        raise RuntimeError('Cluster permits operator secret access; RBAC denial tests cannot pass. '
+                           'Use --allow-unrestricted-rbac to explicitly skip denial checks.')
+    if unrestricted:
+        print('SKIP: RBAC denial enforcement (cluster permits operator secret access)', flush=True)
     for verb,resource,allowed in [('list','pods',True),('watch','pods',True),('patch','pods/ephemeralcontainers',True),('create','pods/exec',True),
                                   ('get','pods/log',True),('delete','pods',False),('list','secrets',False),('get','nodes',False)]:
+        if unrestricted and not allowed:
+            continue
         res, _, sub = resource.partition('/')
         auth_args = ['-n',ns,'auth','can-i',verb,res] + (['--subresource='+sub] if sub else [])
         result=k(*auth_args,operator=True,check=False)
@@ -94,6 +114,17 @@ try:
         'test -s /tmp/checked/recording.jfr; test -s /tmp/checked/nmt_summary.txt; '
         'cat /tmp/checked/capture.json; cat /tmp/checked/report.txt'],profile)
     assert '"status": "complete"' in log and 'JFR' in log and 'Fixture' in log,log
+    assert 'NMT Total Committed:' in log and 'Total Committed (RSS)' not in log,log
+    log,_=debug('java','invalid-inputs',['/bin/sh','-ec',
+        'jvmdiag capture --pid 1 --container --count 1 --capture-only --out-dir /tmp/validation; '
+        'printf "not JVM diagnostic data" > /tmp/invalid.tdump; '
+        'for kind in thread nmt; do '
+        'if jvmdiag analyze /tmp/invalid.tdump --type "$kind" --no-ai > /tmp/rejected 2>&1; then '
+        'cat /tmp/rejected; exit 1; fi; '
+        'grep -q "Analysis failed" /tmp/rejected; cat /tmp/rejected; done; '
+        'if jvmdiag incident --thread /tmp/validation/threaddump_1.txt,/tmp/missing.tdump '
+        '--no-ai > /tmp/rejected 2>&1; then cat /tmp/rejected; exit 1; fi; '
+        'grep -q "missing.tdump" /tmp/rejected; cat /tmp/rejected'],profile)
     # Exercise the documented live-container extraction path with operator exec/cp.
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json') as f:
         json.dump(profile,f);f.flush()
@@ -103,12 +134,28 @@ try:
     k('-n',ns,'wait','--for=jsonpath={.status.ephemeralContainerStatuses[?(@.name=="export")].state.running}',
       'pod/java','--timeout=30s')
     k('-n',ns,'exec','java','-c','export','--','jvmdiag','capture','--pid','1','--container',
-      '--count','1','--out-dir','/tmp/exported','--out','/tmp/exported/report.txt','--no-ai',operator=True)
+      '--count','1','--with-heap','--jfr-duration','1s','--out-dir','/tmp/exported','--out','/tmp/exported/report.txt','--no-ai',operator=True)
     with tempfile.TemporaryDirectory(prefix='jvmdiag-export-') as destination:
         k('-n',ns,'cp','-c','export','java:/tmp/exported',destination+'/capture',operator=True)
         exported=pathlib.Path(destination)/'capture'
         assert json.loads((exported/'capture.json').read_text())['status']=='complete'
         assert (exported/'report.txt').stat().st_size>0
+        assert (exported/'heap.hprof').read_bytes().startswith(b'JAVA PROFILE ')
+        assert (exported/'recording.jfr').read_bytes().startswith(b'FLR\0')
+        assert (exported/'nmt_summary.txt').stat().st_size>0
+        permissions=k('-n',ns,'exec','java','-c','export','--','stat','-c','%a',
+                      '/tmp/exported','/tmp/exported/heap.hprof','/tmp/exported/recording.jfr',
+                      '/tmp/exported/capture.json',operator=True).stdout.split()
+        assert permissions==['700','600','600','600'],permissions
+        if a.results_dir:
+            import shutil
+            shutil.copytree(exported, a.results_dir / 'exported')
+    cleanup_check=k('-n',ns,'exec','java','-c','export','--','/bin/sh','-ec',
+      'test -z "$(find /proc/1/root/tmp -maxdepth 1 -name \"jvmdiag-stage-*\" -print)"; '
+      'test ! -L /tmp/.java_pid1; ln -s /proc/1/root/tmp/.java_pid1 /tmp/.java_pid1; '
+      'trap \'rm -f /tmp/.java_pid1\' EXIT; jcmd 1 JFR.check',operator=True)
+    assert 'No available recordings' in cleanup_check.stdout, cleanup_check.stdout
+    print('PASS: artifact copy, private permissions, staging/bridge/JFR cleanup', flush=True)
     pod('shared-pid',shared=True)
     log,_=debug('shared-pid','discovery',['jvmdiag','ps'],profile)
     java_line=next(line for line in log.splitlines() if 'Fixture' in line)
@@ -120,6 +167,9 @@ try:
     wrong=json.loads(json.dumps(profile));wrong['securityContext']['runAsUser']=10002
     log,_=debug('java','wrong-uid',['jvmdiag','capture','--pid','1','--container','--count','1'],wrong,expected=1)
     assert 'matching effective UID/GID' in log,log
+    wrong=json.loads(json.dumps(profile));wrong['securityContext']['runAsGroup']=10002
+    log,_=debug('java','wrong-gid',['jvmdiag','capture','--pid','1','--container','--count','1'],wrong,expected=1)
+    assert 'matching effective UID/GID' in log,log
     log,_=debug('java','missing-pid',['jvmdiag','capture','--pid','999999','--container','--count','1'],profile,expected=1)
     assert 'not accessible' in log,log
     pod('no-nmt',nmt=False)
@@ -129,6 +179,12 @@ try:
     log,_=debug('attach-disabled','capture',['jvmdiag','capture','--pid','1','--container','--count','1',
         '--command-timeout','2s','--timeout','10s','--capture-only'],profile,expected=1)
     assert 'Live capture failed' in log and 'Partial artifacts' in log,log
-    print('PASS: restricted namespace; operator RBAC; proc discovery; separate mount namespaces; JRE target; thread/heap/JFR/NMT analysis; operator artifact copy; non-init shared PID; no target restart; UID/PID/attach failures; missing NMT')
+    for name in ['java', 'shared-pid', 'no-nmt', 'attach-disabled']:
+        state=json.loads(k('-n',ns,'get','pod',name,'-o','json').stdout)
+        assert state['status']['containerStatuses'][0]['restartCount']==0, (name, 'target restarted')
+    print('PASS: restricted namespace; operator allowed operations; proc discovery; separate mount namespaces; JRE target; thread/heap/JFR/NMT analysis; operator artifact copy; non-init shared PID; no target restart; UID/PID/attach failures; missing NMT')
 finally:
-    k('delete','namespace',ns,'--wait=false',check=False,timeout=30)
+    deleted=k('delete','namespace',ns,'--wait=true','--timeout=60s',check=False,timeout=70)
+    if deleted.returncode:
+        raise RuntimeError(f'Failed to clean test namespace {ns}: {deleted.stderr}')
+    print(f'CLEANUP: deleted namespace {ns}', flush=True)

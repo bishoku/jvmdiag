@@ -17,7 +17,7 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 def docker(*args):
     return subprocess.check_output(['docker',*args],text=True,timeout=120,stderr=subprocess.STDOUT)
 
-def smoke(image,kind,version):
+def smoke(image,kind,version,expect_mat=False):
     output=docker('run','--rm','--network','none',image,'version')
     if 'jvmdiag version '+version not in output:raise ValueError('container version mismatch')
     config=json.loads(docker('image','inspect',image))[0]['Config']
@@ -47,6 +47,11 @@ def smoke(image,kind,version):
             request=urllib.request.Request(url+'/api/settings',headers={'Authorization':'Bearer '+token})
             with urllib.request.urlopen(request,timeout=5) as r:
                 if r.status!=200:raise ValueError('authenticated settings API failed')
+            if expect_mat:
+                request=urllib.request.Request(url+'/api/mat/status',headers={'Authorization':'Bearer '+token})
+                with urllib.request.urlopen(request,timeout=5) as r:status=json.load(r)
+                if not status.get('available') or status.get('scriptPath')!='/opt/mat/ParseHeapDump.sh':
+                    raise ValueError('server did not discover bundled MAT: '+str(status))
         finally:
             subprocess.run(['docker','rm','-f',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=30)
     else:
@@ -65,4 +70,5 @@ def smoke(image,kind,version):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--image',required=True);p.add_argument('--kind',choices=['server','diagnostic'],required=True);p.add_argument('--version',required=True)
-    a=p.parse_args();smoke(a.image,a.kind,a.version)
+    p.add_argument('--expect-mat',action='store_true')
+    a=p.parse_args();smoke(a.image,a.kind,a.version,a.expect_mat)

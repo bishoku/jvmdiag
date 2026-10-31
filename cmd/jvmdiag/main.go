@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -19,19 +18,19 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bishoku/jvmdiag/v3/internal/ai"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/gclog"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/hprof"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/incident"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/jfr"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/mat"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/nmtcrash"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/threaddump"
-	"github.com/bishoku/jvmdiag/v3/internal/capture"
-	"github.com/bishoku/jvmdiag/v3/internal/config"
-	"github.com/bishoku/jvmdiag/v3/internal/mcp"
-	"github.com/bishoku/jvmdiag/v3/internal/server"
-	"github.com/bishoku/jvmdiag/v3/internal/store"
+	"github.com/bishoku/jvmdiag/internal/ai"
+	"github.com/bishoku/jvmdiag/internal/analyzer/gclog"
+	"github.com/bishoku/jvmdiag/internal/analyzer/hprof"
+	"github.com/bishoku/jvmdiag/internal/analyzer/incident"
+	"github.com/bishoku/jvmdiag/internal/analyzer/jfr"
+	"github.com/bishoku/jvmdiag/internal/analyzer/mat"
+	"github.com/bishoku/jvmdiag/internal/analyzer/nmtcrash"
+	"github.com/bishoku/jvmdiag/internal/analyzer/threaddump"
+	"github.com/bishoku/jvmdiag/internal/capture"
+	"github.com/bishoku/jvmdiag/internal/config"
+	"github.com/bishoku/jvmdiag/internal/mcp"
+	"github.com/bishoku/jvmdiag/internal/server"
+	"github.com/bishoku/jvmdiag/internal/store"
 )
 
 var (
@@ -62,6 +61,10 @@ func main() {
 	sub := os.Args[1]
 	args := os.Args[2:]
 
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") && (sub == "ps" || sub == "version") {
+		showCommandHelp(os.Stdout, sub)
+		return
+	}
 	switch sub {
 	case "serve", "server":
 		runServe(args)
@@ -80,7 +83,12 @@ func main() {
 	case "version", "--version", "-v":
 		fmt.Printf("jvmdiag version %s (commit=%s built=%s)\n", version, commit, buildDate)
 	case "help", "--help", "-h":
-		printUsage()
+		if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
+			printUsage()
+		} else if !showCommandHelp(os.Stdout, args[0]) {
+			fmt.Fprintf(os.Stderr, "Unknown command: %s\n", args[0])
+			os.Exit(1)
+		}
 	default:
 		if _, err := os.Stat(sub); err == nil {
 			runAnalyze(os.Args[1:])
@@ -92,26 +100,7 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println(`🔬 JVM Diagnostics Analyzer (jvmdiag v` + version + `)
-
-Usage:
-  jvmdiag serve [flags]                      Start Web UI, REST API & Multi-User Streamable HTTP MCP Server
-  jvmdiag analyze <file> [flags]             Analyze Heap (.hprof), Thread Dump (text/JSON), GC Log, Crash (hs_err), NMT, or JFR (.jfr)
-  jvmdiag diff <file1> <file2> [...] [flags] Compare 2+ Thread Dumps (stuck threads) or 2 Heap Dumps (growing classes)
-  jvmdiag incident [flags]                   Correlate GC Log + Thread Dump(s) + Heap + NMT/Crash + JFR together
-  jvmdiag ps                                 List running local JVM processes (PID, Main Class, JVM args)
-  jvmdiag capture --pid <PID> [flags]        Capture sequential Thread Dumps + NMT (+ optional Heap) from a live JVM and analyze
-  jvmdiag mcp [--file <dump.hprof>]          Start Stdio MCP Server for Claude Desktop, Cursor, Windsurf, Antigravity
-
-Examples:
-  jvmdiag serve --port 8080 --multi-user
-  jvmdiag analyze thread-dump.tdump --ai
-  jvmdiag analyze hs_err_pid1234.log --ai
-  jvmdiag analyze recording.jfr --ai
-  jvmdiag ps
-  jvmdiag capture --pid 12345 --count 3 --interval 2s --ai
-  jvmdiag diff tdump1.txt tdump2.txt tdump3.txt
-  jvmdiag incident --gc gc.log --thread thread-dump.tdump --heap app.hprof --nmt nmt.txt --jfr rec.jfr`)
+	printAllHelp(os.Stdout)
 }
 
 func buildCore(baseDir string) (*config.Manager, *mat.Service, *store.Store, *mcp.Server, *ai.Service) {
@@ -127,35 +116,30 @@ func buildCoreFromConfig(cfg *config.Manager) (*config.Manager, *mat.Service, *s
 }
 
 func runServe(args []string) {
-	fs := flag.NewFlagSet("serve", flag.ExitOnError)
-	port := fs.Int("port", 8080, "HTTP server port")
-	host := fs.String("host", "127.0.0.1", "HTTP bind address")
-	multiUser := fs.Bool("multi-user", false, "Enable multi-user workspace isolation mode")
-	maxWorkers := fs.Int("max-workers", 0, "Max concurrent heavy analysis workers")
-	dataDir := fs.String("data-dir", "", "Custom data directory (defaults to ~/.jvmdiag)")
+	fs, opts := newServeFlags()
 	_ = fs.Parse(args)
 
-	if envPort := os.Getenv("SERVER_PORT"); envPort != "" && *port == 8080 {
-		fmt.Sscanf(envPort, "%d", port)
+	if envPort := os.Getenv("SERVER_PORT"); envPort != "" && *opts.port == 8080 {
+		fmt.Sscanf(envPort, "%d", opts.port)
 	}
 
-	cfg := config.NewManager(*dataDir)
-	if *multiUser {
+	cfg := config.NewManager(*opts.dataDir)
+	if *opts.multiUser {
 		cfg.SetMultiUser(true)
 	}
-	if *maxWorkers > 0 {
-		cfg.SetMaxWorkers(*maxWorkers)
+	if *opts.maxWorkers > 0 {
+		cfg.SetMaxWorkers(*opts.maxWorkers)
 	}
 
 	_, matSvc, st, mcpSrv, aiSvc := buildCoreFromConfig(cfg)
 	srv := server.NewServer(cfg, st, matSvc, mcpSrv, aiSvc)
-	addr := net.JoinHostPort(*host, strconv.Itoa(*port))
+	addr := net.JoinHostPort(*opts.host, strconv.Itoa(*opts.port))
 
 	fmt.Printf("╔══════════════════════════════════════════════════════════════╗\n")
 	fmt.Printf("║  🔬 JVM Diagnostics Analyzer (Go v%s)                     ║\n", version)
 	fmt.Printf("╠══════════════════════════════════════════════════════════════╣\n")
-	fmt.Printf("║  Web UI & API : http://localhost:%-27d ║\n", *port)
-	fmt.Printf("║  MCP HTTP URL : http://localhost:%d/mcp                      ║\n", *port)
+	fmt.Printf("║  Web UI & API : http://localhost:%-27d ║\n", *opts.port)
+	fmt.Printf("║  MCP HTTP URL : http://localhost:%d/mcp                      ║\n", *opts.port)
 	fmt.Printf("║  Multi-User   : %-44v ║\n", cfg.IsMultiUser())
 	fmt.Printf("║  MAT Installed: %-44v ║\n", matSvc.IsAvailable())
 	fmt.Printf("╚══════════════════════════════════════════════════════════════╝\n")
@@ -184,46 +168,30 @@ func runPS() {
 }
 
 func runCapture(args []string) {
-	fs := flag.NewFlagSet("capture", flag.ExitOnError)
-	pid := fs.Int("pid", 0, "Target JVM PID to capture")
-	count := fs.Int("count", 3, "Number of sequential thread dumps to capture")
-	interval := fs.Duration("interval", 2*time.Second, "Interval between sequential thread dumps")
-	withHeap := fs.Bool("with-heap", false, "Also trigger GC.heap_dump (.hprof)")
-	container := fs.Bool("container", false, "Use Linux target mount namespace via /proc/PID/root")
-	targetDir := fs.String("target-dir", "", "Writable absolute staging directory (container: /tmp; local: system temp)")
-	jfrDuration := fs.Duration("jfr-duration", 0, "Also record JFR for this duration (max 10m)")
-	timeout := fs.Duration("timeout", 3*time.Minute, "Overall capture timeout")
-	commandTimeout := fs.Duration("command-timeout", 30*time.Second, "Timeout per JDK tool command; raise for large heaps")
-	captureOnly := fs.Bool("capture-only", false, "Save artifacts and manifest without analysis")
-	dataDir := fs.String("data-dir", "", "Configuration and analysis data directory")
-	outDir := fs.String("out-dir", "", "Directory to store captured raw files")
-	useAI := fs.Bool("ai", false, "Run AI root-cause diagnosis on captured bundle")
-	noAI := fs.Bool("no-ai", false, "Skip AI diagnosis")
-	workspace := fs.String("workspace", "default", "Workspace ID")
-	outFile := fs.String("out", "", "Optional output file path to write report")
+	fs, opts := newCaptureFlags()
 	_ = fs.Parse(reorderFlagsFirst(args))
 
-	if *timeout <= 0 || *commandTimeout <= 0 {
+	if *opts.timeout <= 0 || *opts.commandTimeout <= 0 {
 		fmt.Fprintln(os.Stderr, "Error: timeout durations must be positive")
 		os.Exit(1)
 	}
-	if *pid <= 0 {
+	if *opts.pid <= 0 {
 		fmt.Fprintln(os.Stderr, "Error: --pid <PID> is required. Run 'jvmdiag ps' to see running JVMs.")
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stderr, "🎯 Capturing %d sequential snapshots (interval=%v) from PID %d...\n", *count, *interval, *pid)
+	fmt.Fprintf(os.Stderr, "🎯 Capturing %d sequential snapshots (interval=%v) from PID %d...\n", *opts.count, *opts.interval, *opts.pid)
 	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	ctx, cancel := context.WithTimeout(signalCtx, *timeout)
+	ctx, cancel := context.WithTimeout(signalCtx, *opts.timeout)
 	defer cancel()
 	bundle, err := capture.CaptureBundle(ctx, capture.Options{
-		Container: *container, TargetDir: *targetDir, JFRDuration: *jfrDuration, CommandTimeout: *commandTimeout,
-		PID:       *pid,
-		Count:     *count,
-		Interval:  *interval,
-		WithHeap:  *withHeap,
-		OutputDir: *outDir,
+		Container: *opts.container, TargetDir: *opts.targetDir, JFRDuration: *opts.jfrDuration, CommandTimeout: *opts.commandTimeout,
+		PID:       *opts.pid,
+		Count:     *opts.count,
+		Interval:  *opts.interval,
+		WithHeap:  *opts.withHeap,
+		OutputDir: *opts.outDir,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Live capture failed: %v\n", err)
@@ -234,12 +202,12 @@ func runCapture(args []string) {
 	}
 	fmt.Fprintf(os.Stderr, "✓ Captured artifacts in %s (%s)\n", bundle.OutputDir, strings.Join(bundle.Notes, "; "))
 
-	if *captureOnly {
+	if *opts.captureOnly {
 		data, _ := json.MarshalIndent(bundle, "", "  ")
-		outputResult(string(data), *outFile)
+		outputResult(string(data), *opts.outFile)
 		return
 	}
-	cfg, matSvc, st, _, aiSvc := buildCore(*dataDir)
+	cfg, matSvc, st, _, aiSvc := buildCore(*opts.dataDir)
 	defer st.Close()
 	report, err := incident.Analyze(ctx, matSvc, incident.Input{
 		ThreadDumpPaths: bundle.ThreadDumpPaths,
@@ -256,24 +224,17 @@ func runCapture(args []string) {
 	if len(bundle.Notes) > 0 {
 		fullOutput += "\n\nCapture limitations:\n- " + strings.Join(bundle.Notes, "\n- ")
 	}
-	if *useAI && !*noAI && cfg.IsConfigured(*workspace) {
+	if *opts.useAI && !*opts.noAI && cfg.IsConfigured(*opts.workspace) {
 		fmt.Fprintln(os.Stderr, "🤖 Requesting AI (LLM) diagnosis...")
-		if aiResp, aerr := aiSvc.AnalyzeReport(ctx, *workspace, ai.PromptIncident, report); aerr == nil {
+		if aiResp, aerr := aiSvc.AnalyzeReport(ctx, *opts.workspace, ai.PromptIncident, report); aerr == nil {
 			fullOutput += "\n\n" + strings.Repeat("═", 60) + "\n🤖 AI LIVE CAPTURE DIAGNOSIS\n" + strings.Repeat("═", 60) + "\n\n" + aiResp
 		}
 	}
-	outputResult(fullOutput, *outFile)
+	outputResult(fullOutput, *opts.outFile)
 }
 
 func runAnalyze(args []string) {
-	fs := flag.NewFlagSet("analyze", flag.ExitOnError)
-	explicitType := fs.String("type", "", "Explicit artifact type: heap, thread, gc, crash, nmt, jfr")
-	useAI := fs.Bool("ai", true, "Send static report to configured AI provider for root-cause insights")
-	noAI := fs.Bool("no-ai", false, "Skip AI diagnosis and output static report only")
-	deepMat := fs.Bool("deep-mat", false, "Use Eclipse MAT in addition to Native Go HPROF parser")
-	remoteServer := fs.String("server", "", "Remote jvmdiag server URL (e.g. http://localhost:8080) for remote execution")
-	workspace := fs.String("workspace", "default", "Workspace ID for multi-user server isolation")
-	outFile := fs.String("out", "", "Optional output file path to write report")
+	fs, opts := newAnalyzeFlags()
 	_ = fs.Parse(reorderFlagsFirst(args))
 
 	if fs.NArg() < 1 {
@@ -282,14 +243,14 @@ func runAnalyze(args []string) {
 	}
 	filePath := fs.Arg(0)
 
-	if *remoteServer != "" {
-		runRemoteAnalyze(*remoteServer, *workspace, filePath, *outFile)
+	if *opts.remoteServer != "" {
+		runRemoteAnalyze(*opts.remoteServer, *opts.workspace, filePath, *opts.outFile)
 		return
 	}
 
 	cfg, matSvc, _, _, aiSvc := buildCore("")
 	ext := strings.ToLower(filepath.Ext(filePath))
-	kind := strings.ToLower(strings.TrimSpace(*explicitType))
+	kind := strings.ToLower(strings.TrimSpace(*opts.explicitType))
 
 	var (
 		staticReport string
@@ -300,7 +261,7 @@ func runAnalyze(args []string) {
 	switch {
 	case kind == "heap" || ext == ".hprof":
 		promptType = ai.PromptHeapDump
-		staticReport, _, _, err = mat.AnalyzeHeapHybrid(context.Background(), matSvc, filePath, *deepMat)
+		staticReport, _, _, err = mat.AnalyzeHeapHybrid(context.Background(), matSvc, filePath, *opts.deepMat)
 	case kind == "jfr" || ext == ".jfr" || isJFRFile(filePath):
 		promptType = ai.PromptJFR
 		staticReport, _, err = jfr.AnalyzeFile(filePath)
@@ -321,12 +282,12 @@ func runAnalyze(args []string) {
 	}
 
 	fullOutput := staticReport
-	if *useAI && !*noAI {
-		if !cfg.IsConfigured(*workspace) {
+	if *opts.useAI && !*opts.noAI {
+		if !cfg.IsConfigured(*opts.workspace) {
 			fmt.Fprintln(os.Stderr, "ℹ️  [AI] API key not configured (set OPENROUTER_API_KEY or configure in Web UI /settings). Showing static report only.")
 		} else {
 			fmt.Fprintln(os.Stderr, "🤖 Requesting AI (LLM) diagnosis...")
-			aiResp, aerr := aiSvc.AnalyzeReport(context.Background(), *workspace, promptType, staticReport)
+			aiResp, aerr := aiSvc.AnalyzeReport(context.Background(), *opts.workspace, promptType, staticReport)
 			if aerr != nil {
 				fmt.Fprintf(os.Stderr, "[Warning] AI request failed: %v\n", aerr)
 			} else {
@@ -335,15 +296,11 @@ func runAnalyze(args []string) {
 		}
 	}
 
-	outputResult(fullOutput, *outFile)
+	outputResult(fullOutput, *opts.outFile)
 }
 
 func runDiff(args []string) {
-	fs := flag.NewFlagSet("diff", flag.ExitOnError)
-	useAI := fs.Bool("ai", true, "Interpret diff report with AI")
-	noAI := fs.Bool("no-ai", false, "Skip AI diagnosis")
-	workspace := fs.String("workspace", "default", "Workspace ID")
-	outFile := fs.String("out", "", "Optional output file path")
+	fs, opts := newDiffFlags()
 	_ = fs.Parse(reorderFlagsFirst(args))
 
 	files := fs.Args()
@@ -368,32 +325,22 @@ func runDiff(args []string) {
 	}
 
 	fullOutput := report
-	if *useAI && !*noAI && cfg.IsConfigured(*workspace) {
+	if *opts.useAI && !*opts.noAI && cfg.IsConfigured(*opts.workspace) {
 		fmt.Fprintln(os.Stderr, "🤖 Requesting AI (LLM) diff diagnosis...")
-		if aiResp, aerr := aiSvc.AnalyzeReport(context.Background(), *workspace, ai.PromptDiff, report); aerr == nil {
+		if aiResp, aerr := aiSvc.AnalyzeReport(context.Background(), *opts.workspace, ai.PromptDiff, report); aerr == nil {
 			fullOutput += "\n\n" + strings.Repeat("═", 60) + "\n🤖 AI DIFF DIAGNOSIS\n" + strings.Repeat("═", 60) + "\n\n" + aiResp
 		}
 	}
-	outputResult(fullOutput, *outFile)
+	outputResult(fullOutput, *opts.outFile)
 }
 
 func runIncident(args []string) {
-	fs := flag.NewFlagSet("incident", flag.ExitOnError)
-	gcPath := fs.String("gc", "", "Path to GC log file")
-	threadPaths := fs.String("thread", "", "Comma-separated path(s) to thread dump file(s)")
-	heapPath := fs.String("heap", "", "Path to .hprof heap dump file")
-	nmtPath := fs.String("nmt", "", "Path to NMT or hs_err crash log file")
-	jfrPath := fs.String("jfr", "", "Path to .jfr recording file")
-	deepMat := fs.Bool("deep-mat", false, "Enable Eclipse MAT deep analysis for heap dump")
-	useAI := fs.Bool("ai", true, "Interpret correlated incident report with AI")
-	noAI := fs.Bool("no-ai", false, "Skip AI diagnosis")
-	workspace := fs.String("workspace", "default", "Workspace ID")
-	outFile := fs.String("out", "", "Optional output file path")
+	fs, opts := newIncidentFlags()
 	_ = fs.Parse(reorderFlagsFirst(args))
 
 	var tdList []string
-	if *threadPaths != "" {
-		for _, p := range strings.Split(*threadPaths, ",") {
+	if *opts.threadPaths != "" {
+		for _, p := range strings.Split(*opts.threadPaths, ",") {
 			if trimmed := strings.TrimSpace(p); trimmed != "" {
 				tdList = append(tdList, trimmed)
 			}
@@ -402,12 +349,12 @@ func runIncident(args []string) {
 
 	cfg, matSvc, _, _, aiSvc := buildCore("")
 	report, err := incident.Analyze(context.Background(), matSvc, incident.Input{
-		GCLogPath:       *gcPath,
+		GCLogPath:       *opts.gcPath,
 		ThreadDumpPaths: tdList,
-		HeapDumpPath:    *heapPath,
-		NMTCrashPath:    *nmtPath,
-		JFRPath:         *jfrPath,
-		UseDeepMAT:      *deepMat,
+		HeapDumpPath:    *opts.heapPath,
+		NMTCrashPath:    *opts.nmtPath,
+		JFRPath:         *opts.jfrPath,
+		UseDeepMAT:      *opts.deepMat,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Incident analysis failed: %v\n", err)
@@ -415,22 +362,21 @@ func runIncident(args []string) {
 	}
 
 	fullOutput := report
-	if *useAI && !*noAI && cfg.IsConfigured(*workspace) {
+	if *opts.useAI && !*opts.noAI && cfg.IsConfigured(*opts.workspace) {
 		fmt.Fprintln(os.Stderr, "🤖 Requesting AI (LLM) incident correlation diagnosis...")
-		if aiResp, aerr := aiSvc.AnalyzeReport(context.Background(), *workspace, ai.PromptIncident, report); aerr == nil {
+		if aiResp, aerr := aiSvc.AnalyzeReport(context.Background(), *opts.workspace, ai.PromptIncident, report); aerr == nil {
 			fullOutput += "\n\n" + strings.Repeat("═", 60) + "\n🤖 AI INCIDENT ROOT-CAUSE CORRELATION\n" + strings.Repeat("═", 60) + "\n\n" + aiResp
 		}
 	}
-	outputResult(fullOutput, *outFile)
+	outputResult(fullOutput, *opts.outFile)
 }
 
 func runMcpStdio(args []string) {
-	fs := flag.NewFlagSet("mcp", flag.ExitOnError)
-	filePath := fs.String("file", "", "Optional path to .hprof file to preload for Stdio MCP")
+	fs, opts := newMcpFlags()
 	_ = fs.Parse(reorderFlagsFirst(args))
 
 	_, _, _, mcpSrv, _ := buildCore("")
-	if err := mcpSrv.RunStdio(context.Background(), *filePath); err != nil {
+	if err := mcpSrv.RunStdio(context.Background(), *opts.filePath); err != nil {
 		fmt.Fprintf(os.Stderr, "MCP stdio error: %v\n", err)
 		os.Exit(1)
 	}

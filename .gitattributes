@@ -1,0 +1,9 @@
+# Preserve byte-stable source hashes, embedded assets and release metadata on every OS.
+* text=auto eol=lf
+*.gz binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary

@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/gclog"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/hprof"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/incident"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/jfr"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/nmtcrash"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/threaddump"
+	"github.com/bishoku/jvmdiag/internal/analyzer/gclog"
+	"github.com/bishoku/jvmdiag/internal/analyzer/hprof"
+	"github.com/bishoku/jvmdiag/internal/analyzer/incident"
+	"github.com/bishoku/jvmdiag/internal/analyzer/jfr"
+	"github.com/bishoku/jvmdiag/internal/analyzer/nmtcrash"
+	"github.com/bishoku/jvmdiag/internal/analyzer/threaddump"
 )
 
 func buildSyntheticHprof(t *testing.T, cacheInstances int, dupStrings int) []byte {

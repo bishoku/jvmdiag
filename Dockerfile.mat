@@ -1,0 +1,57 @@
+# Optional Web UI image with full JDK + preinstalled Eclipse MAT.
+# Built separately; the minimal server and diagnostic images stay unchanged.
+ARG GO_IMAGE=golang:1.27.3-bookworm
+ARG JDK_IMAGE=eclipse-temurin:17-jdk-jammy
+ARG FETCH_IMAGE=alpine:3.24.3
+FROM ${GO_IMAGE} AS builder
+ARG VERSION=dev
+ARG COMMIT=unknown
+ARG BUILD_DATE=unknown
+WORKDIR /src
+COPY go.mod ./
+COPY cmd/ ./cmd/
+COPY internal/ ./internal/
+RUN CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w -buildid= -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.buildDate=${BUILD_DATE}" -o /out/jvmdiag ./cmd/jvmdiag
+
+FROM ${FETCH_IMAGE} AS mat
+ARG TARGETARCH
+# An approved internal mirror can serve these exact pinned bytes.
+ARG MAT_BASE_URL=https://download.eclipse.org/mat/1.16.1/rcp
+RUN apk add --no-cache ca-certificates curl unzip
+RUN set -eu; \
+    case "$TARGETARCH" in \
+      amd64) platform=x86_64; checksum=7c7bc3457e08bdcd187fdafb28573b00e8e9f56b46a872fb63dbbaf7f508f01e ;; \
+      arm64) platform=aarch64; checksum=1dbd98be41c50a14d2a1196f0f3fe19908506a025959f60879325bde0473cd9d ;; \
+      *) echo "Unsupported MAT architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac; \
+    archive="MemoryAnalyzer-1.16.1.20250109-linux.gtk.${platform}.zip"; \
+    curl --fail --location --retry 2 --connect-timeout 30 --max-time 600 \
+      "${MAT_BASE_URL}/${archive}" --output /tmp/mat.zip; \
+    echo "$checksum  /tmp/mat.zip" | sha256sum -c -; \
+    mkdir /out; unzip -q /tmp/mat.zip -d /out; \
+    test -f /out/mat/ParseHeapDump.sh; \
+    chmod 755 /out/mat/MemoryAnalyzer /out/mat/ParseHeapDump.sh; \
+    rm /tmp/mat.zip
+
+FROM ${JDK_IMAGE}
+COPY --from=builder /out/jvmdiag /usr/local/bin/jvmdiag
+# Preserve the whole upstream distribution, including all component notices.
+COPY --from=mat /out/mat/ /opt/mat/
+COPY LICENSE NOTICE LICENSE-Go.txt THIRD_PARTY_NOTICES.md /usr/share/licenses/jvmdiag/
+COPY internal/server/assets/js/LICENSE.marked.txt /usr/share/licenses/jvmdiag/LICENSE.marked.txt
+RUN mkdir -p /data && chown 10001:0 /data && chmod 2770 /data
+ARG VERSION=dev
+ARG COMMIT=unknown
+ARG SOURCE_URL=""
+LABEL org.opencontainers.image.title="go-jvmdiag with Eclipse MAT" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${COMMIT}" \
+      org.opencontainers.image.source="${SOURCE_URL}" \
+      org.opencontainers.image.licenses="Apache-2.0 AND EPL-2.0" \
+      io.jvmdiag.mat.version="1.16.1"
+ENV HOME=/data APP_MAT_HOME=/opt/mat JAVA_TOOL_OPTIONS="-Duser.home=/data"
+USER 10001:10001
+WORKDIR /data
+EXPOSE 8080
+ENTRYPOINT ["jvmdiag"]
+CMD ["serve", "--host", "0.0.0.0", "--port", "8080", "--multi-user", "--max-workers", "1", "--data-dir", "/data"]

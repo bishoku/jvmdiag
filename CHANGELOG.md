@@ -4,7 +4,39 @@ Changes follow [Semantic Versioning](https://semver.org/). Dates are recorded wh
 
 ## [Unreleased]
 
-## [3.0.0]
+## [0.0.5] - 2026-10-26
+
+- List every supported CLI flag and its description in top-level help; support focused `help <command>` from the same flag definitions used during execution.
+
+- Normalize capture staging directories before use so macOS TMPDIR paths ending in a separator work for heap/JFR capture; keep rejecting relative paths and unsafe characters.
+
+- Show unavailable MAT status explicitly when authentication or network requests fail, rather than leaving an active download button; document personal/shared Docker usage.
+
+## [0.0.4] - 2026-10-26
+
+- Publish tested AMD64/ARM64 server, JDK 17/25 diagnostic and MAT+JDK17 images to GHCR and Docker Hub (`barishoku/jvmdiag`), with distinct version and stable tags.
+
+- Add an optional full-JDK image with checksum-pinned Eclipse MAT and offline, read-only, arbitrary-UID heap-analysis smoke coverage.
+
+- Add persistent Web UI/API/MCP server examples for Kubernetes and OpenShift, including PVCs, access secrets, an OpenShift TLS Route, and optional proxy/CA configuration.
+- Document actual large-dump capacity limits, memory sizing, timeouts and offline analysis alternatives; replace the unverified 5 GB UI claim.
+- Document backend MAT proxy/trust/offline workflows and add a CONNECT-proxy regression for downloader error reporting.
+
+## [0.0.3] - 2026-10-24
+
+- Discover embedded HotSpot JVMs launched by native executables such as IntelliJ IDEA, including Linux systems without JDK discovery tools.
+- Merge procfs and JDK process listings by PID, retaining container JVMs and preferring JDK main-class metadata; try JDK tools even when procfs returns an empty list.
+- Add regressions for native launchers, duplicate PIDs, unavailable JDK tools and discovery without procfs.
+- Correct the installation guide's Docker loopback binding example.
+
+## [0.0.2] - 2026-10-24
+
+- Fail incident and MCP capture analysis when a requested thread snapshot cannot be read or analyzed.
+- Reject unrecognized thread/NMT input and malformed thread JSON across CLI, uploads, diffs and inline MCP analysis.
+- Label NMT committed memory separately from RSS/cgroup usage and explain the derived off-heap metric.
+- Add regression coverage and explicit local MicroK8s integration testing; reorganize user documentation.
+
+## [0.0.1]
 
 - Native JVM diagnostics with workspace authorization, protected configuration and browser output sanitization.
 - Scoped JFR/HPROF evidence, confidence and explicit limitations; unavailable data is not reported as successful diagnosis.

@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/gclog"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/hprof"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/jfr"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/mat"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/nmtcrash"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/threaddump"
+	"github.com/bishoku/jvmdiag/internal/analyzer/gclog"
+	"github.com/bishoku/jvmdiag/internal/analyzer/hprof"
+	"github.com/bishoku/jvmdiag/internal/analyzer/jfr"
+	"github.com/bishoku/jvmdiag/internal/analyzer/mat"
+	"github.com/bishoku/jvmdiag/internal/analyzer/nmtcrash"
+	"github.com/bishoku/jvmdiag/internal/analyzer/threaddump"
 )
 
 type Input struct {
@@ -60,9 +60,10 @@ func Analyze(ctx context.Context, matSvc *mat.Service, in Input) (string, error)
 		tdSummary = s
 		if len(in.ThreadDumpPaths) >= 2 {
 			diff, derr := threaddump.CompareFiles(in.ThreadDumpPaths)
-			if derr == nil {
-				tdDiffReport = diff
+			if derr != nil {
+				return "", fmt.Errorf("thread snapshot comparison failed: %w", derr)
 			}
+			tdDiffReport = diff
 		}
 	}
 

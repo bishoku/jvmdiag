@@ -130,6 +130,8 @@ jobs:
           - {runner: ubuntu-24.04-arm, arch: arm64, variant: diagnostic17, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:17-jdk-jammy}
           - {runner: ubuntu-24.04, arch: amd64, variant: diagnostic25, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:25-jdk-jammy}
           - {runner: ubuntu-24.04-arm, arch: arm64, variant: diagnostic25, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:25-jdk-jammy}
+          - {runner: ubuntu-24.04, arch: amd64, variant: mat17, file: Dockerfile.mat, kind: server, jdk: eclipse-temurin:17-jdk-jammy}
+          - {runner: ubuntu-24.04-arm, arch: arm64, variant: mat17, file: Dockerfile.mat, kind: server, jdk: eclipse-temurin:17-jdk-jammy}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     steps:
@@ -151,6 +153,11 @@ jobs:
         env:
           KIND: ${{ matrix.kind }}
         run: python3 scripts/container_smoke.py --image jvmdiag:ci --kind "$KIND" --version 0.0.0-ci
+      - name: Verify bundled MAT with real HPROF and no network
+        if: matrix.variant == 'mat17'
+        run: |
+          python3 scripts/mat_image_smoke.py --image jvmdiag:ci
+          python3 scripts/container_smoke.py --image jvmdiag:ci --kind server --version 0.0.0-ci --expect-mat
   kubernetes:
     runs-on: ubuntu-24.04
     timeout-minutes: 20

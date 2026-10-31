@@ -84,10 +84,28 @@ func AnalyzeFile(path string) (string, *DumpSummary, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	content := string(data)
-	summary := ParseContent(filepath.Base(path), content)
-	report := BuildReport(summary, content)
-	return report, summary, nil
+	return AnalyzeText(filepath.Base(path), string(data))
+}
+
+// AnalyzeText validates supported diagnostic evidence before building a report.
+// ParseContent remains a low-level parser; user-facing entry points use this API.
+func AnalyzeText(fileName, content string) (string, *DumpSummary, error) {
+	trimmed := strings.TrimSpace(content)
+	if strings.HasPrefix(trimmed, "{") && !json.Valid([]byte(trimmed)) {
+		return "", nil, fmt.Errorf("invalid thread dump %q: malformed JSON", fileName)
+	}
+	summary := ParseContent(fileName, content)
+	recognized := false
+	for _, thread := range summary.Threads {
+		if thread.TID != "" || (thread.State != "JVM_INTERNAL" && len(thread.StackFrames) > 0) {
+			recognized = true
+			break
+		}
+	}
+	if !recognized {
+		return "", nil, fmt.Errorf("invalid or unsupported thread dump %q: no recognizable thread records", fileName)
+	}
+	return BuildReport(summary, content), summary, nil
 }
 
 // jcmd Thread.dump_to_file -format=json schema (Java 21+)
@@ -663,11 +681,11 @@ func CompareFiles(paths []string) (string, error) {
 
 	var dumps []*DumpSummary
 	for _, p := range paths {
-		data, err := os.ReadFile(p)
+		_, summary, err := AnalyzeFile(p)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("thread dump %q: %w", p, err)
 		}
-		dumps = append(dumps, ParseContent(filepath.Base(p), string(data)))
+		dumps = append(dumps, summary)
 	}
 
 	return CompareSummaries(dumps), nil

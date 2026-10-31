@@ -70,6 +70,8 @@ jobs:
           - {runner: ubuntu-24.04-arm, arch: arm64, variant: diagnostic17, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:17-jdk-jammy}
           - {runner: ubuntu-24.04, arch: amd64, variant: diagnostic25, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:25-jdk-jammy}
           - {runner: ubuntu-24.04-arm, arch: arm64, variant: diagnostic25, file: Dockerfile.diagnostic, kind: diagnostic, jdk: eclipse-temurin:25-jdk-jammy}
+          - {runner: ubuntu-24.04, arch: amd64, variant: mat17, file: Dockerfile.mat, kind: server, jdk: eclipse-temurin:17-jdk-jammy}
+          - {runner: ubuntu-24.04-arm, arch: arm64, variant: mat17, file: Dockerfile.mat, kind: server, jdk: eclipse-temurin:17-jdk-jammy}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 25
     env:
@@ -97,34 +99,50 @@ jobs:
           if [ -n "$JDK_IMAGE" ]; then args+=(--build-arg "JDK_IMAGE=$JDK_IMAGE"); fi
           docker buildx build --load --provenance=false -f "$DOCKERFILE" -t jvmdiag:candidate             --build-arg "VERSION=$VERSION" --build-arg "COMMIT=$COMMIT" --build-arg "BUILD_DATE=$BUILD_DATE"             --build-arg "SOURCE_URL=$SOURCE_URL" "${args[@]}" .
           python3 scripts/container_smoke.py --image jvmdiag:candidate --kind "$KIND" --version "$VERSION"
+      - name: Verify bundled MAT with real HPROF and no network
+        if: matrix.variant == 'mat17'
+        run: |
+          python3 scripts/mat_image_smoke.py --image jvmdiag:candidate
+          python3 scripts/container_smoke.py --image jvmdiag:candidate --kind server --version "$VERSION" --expect-mat
       - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: docker.io
+          username: barishoku
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Push only the tested native image to a unique staging tag
         run: |
-          tag="$IMAGE:build-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$VARIANT-$ARCH"
-          docker tag jvmdiag:candidate "$tag"
-          docker push "$tag"
-          export CANDIDATE="$tag"
-          python3 - <<'PYCODE'
+          for registry in ghcr hub; do
+            if [ "$registry" = ghcr ]; then repository="$IMAGE"; else repository=docker.io/barishoku/jvmdiag; fi
+            tag="$repository:build-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$VARIANT-$ARCH"
+            docker tag jvmdiag:candidate "$tag"
+            docker push "$tag"
+            export CANDIDATE="$tag" REGISTRY_KEY="$registry" TARGET_IMAGE="$repository"
+            python3 - <<'PYCODE'
           import json,os,pathlib,subprocess
           raw=subprocess.check_output(['docker','buildx','imagetools','inspect',os.environ['CANDIDATE'],'--format','{{json .Manifest}}'],text=True)
           digest=json.loads(raw)['digest']
-          pathlib.Path('images').mkdir()
-          data={key:os.environ[key] for key in ('IMAGE','VERSION','COMMIT','VARIANT','ARCH')}
-          data['digest']=digest
-          pathlib.Path('images',data['VARIANT']+'-'+data['ARCH']+'.json').write_text(json.dumps(data))
+          directory=pathlib.Path('images',os.environ['REGISTRY_KEY']);directory.mkdir(parents=True,exist_ok=True)
+          data={key:os.environ[key] for key in ('VERSION','COMMIT','VARIANT','ARCH')}
+          data.update(IMAGE=os.environ['TARGET_IMAGE'],digest=digest)
+          (directory/(data['VARIANT']+'-'+data['ARCH']+'.json')).write_text(json.dumps(data))
           PYCODE
+          done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: image-${{ matrix.variant }}-${{ matrix.arch }}
-          path: images/*.json
+          path: images/**/*.json
           if-no-files-found: error
           retention-days: 7
   publish:
     needs: [metadata, verify, images]
+    concurrency:
+      group: release-publication
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -160,6 +178,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: docker.io
+          username: barishoku
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Validate the complete tested artifact set and prepare a draft
         run: |
           python3 scripts/release.py collect dist
@@ -183,7 +206,7 @@ jobs:
             dist/release.json
       - name: Promote tested image digests to multi-architecture version tags
         id: promote
-        run: python3 scripts/promote_images.py --directory images --image "$IMAGE" --tag "$TAG" --commit "$COMMIT"
+        run: python3 scripts/promote_images.py --directory images/ghcr --image "$IMAGE" --tag "$TAG" --commit "$COMMIT"
       - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
@@ -201,7 +224,16 @@ jobs:
           push-to-registry: true
       - name: Update stable aliases without promoting prereleases or downgrading newer releases
         id: aliases
-        run: python3 scripts/promote_images.py --directory images --image "$IMAGE" --tag "$TAG" --commit "$COMMIT" --aliases
+        run: python3 scripts/promote_images.py --directory images/ghcr --image "$IMAGE" --tag "$TAG" --commit "$COMMIT" --aliases
+      - name: Promote tested Docker Hub images and stable aliases
+        run: |
+          python3 scripts/promote_images.py --directory images/hub --image docker.io/barishoku/jvmdiag --tag "$TAG" --commit "$COMMIT"
+          python3 scripts/promote_images.py --directory images/hub --image docker.io/barishoku/jvmdiag --tag "$TAG" --commit "$COMMIT" --aliases
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.promote.outputs.mat17 }}
+          push-to-registry: true
       - name: Publish the fully prepared release
         env:
           MAKE_LATEST: ${{ steps.aliases.outputs.latest }}

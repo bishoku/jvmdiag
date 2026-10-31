@@ -2,7 +2,7 @@ package model
 
 import (
 	"context"
-	"github.com/bishoku/jvmdiag/v3/internal/analyzer/quality"
+	"github.com/bishoku/jvmdiag/internal/analyzer/quality"
 	"sync"
 	"time"
 )

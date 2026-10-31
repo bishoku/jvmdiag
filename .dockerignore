@@ -11,3 +11,7 @@ tests/corpus
 **/node_modules
 *.env
 *.env.*
+.jvmdiag/
+dist/
+.kube/
+coverage*
